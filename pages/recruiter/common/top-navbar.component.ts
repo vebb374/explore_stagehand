@@ -1,0 +1,31 @@
+import { Locator, Page } from "@playwright/test";
+
+export class TopNavbarComponent {
+  private readonly assessmentsLink: Locator;
+  private readonly homeLink: Locator;
+  private readonly interviewsLink: Locator;
+
+  constructor(private page: Page) {
+    this.assessmentsLink = page.getByRole("link", {
+      name: "Assessments",
+      exact: true,
+    });
+    this.homeLink = page.getByRole("link", { name: "Home" });
+    this.interviewsLink = page.getByRole("link", {
+      name: "Interviews",
+      exact: true,
+    });
+  }
+
+  async navigateToAssessments() {
+    await this.assessmentsLink.click();
+  }
+
+  async navigateToHome() {
+    await this.homeLink.click();
+  }
+
+  async navigateToInterviews() {
+    await this.interviewsLink.click();
+  }
+}

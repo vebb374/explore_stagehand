@@ -1,0 +1,13 @@
+#secrets
+.env
+
+#packages
+node_modules
+
+#system
+.DS_Store
+dist
+
+#reports
+playwright-report/
+test-results/
