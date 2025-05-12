@@ -29,6 +29,7 @@ export class InvitedCandidatesPage extends BasePage {
   private readonly invitedOnColumn: Locator;
   private readonly invitedByColumn: Locator;
   private readonly emailStatusColumn: Locator;
+  private readonly tagsColumn: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -79,6 +80,7 @@ export class InvitedCandidatesPage extends BasePage {
     this.emailStatusColumn = this.candidatesTable.locator(
       "th:has-text('Email status')"
     );
+    this.tagsColumn = this.candidatesTable.locator("th:has-text('Tags')");
   }
 
   /**
@@ -149,6 +151,43 @@ export class InvitedCandidatesPage extends BasePage {
 
     const statusCell = row.locator("td:nth-child(5)");
     return await statusCell.textContent();
+  }
+
+  /**
+   * Get the tags of a candidate by email
+   * @param email - The email to search for
+   * @returns Array of tag strings or empty array if no tags found
+   */
+  async getCandidateTags(email: string): Promise<string[]> {
+    const row = this.candidateRows.filter({
+      has: this.candidatesTable.locator(`td:has-text("${email}")`),
+    });
+    if ((await row.count()) === 0) return [];
+
+    // Determine which column has the tags (need to count columns)
+    const tagsContent = await row.locator("td").allTextContents();
+    const tagsText = tagsContent.find(
+      (text) => text.includes(",") || /^[A-Za-z0-9\-_]+$/.test(text)
+    );
+
+    if (!tagsText) return [];
+
+    // Parse comma-separated tags
+    return tagsText
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+  }
+
+  /**
+   * Verify if a candidate has specific tags
+   * @param email - The email to search for
+   * @param expectedTags - Array of tags to verify
+   * @returns True if all tags are found
+   */
+  async hasTags(email: string, expectedTags: string[]): Promise<boolean> {
+    const candidateTags = await this.getCandidateTags(email);
+    return expectedTags.every((tag) => candidateTags.includes(tag));
   }
 
   /**

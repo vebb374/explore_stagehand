@@ -14,6 +14,7 @@ export class InviteCandidatesModalComponent {
   private readonly firstNameInput: Locator;
   private readonly lastNameInput: Locator;
   private readonly tagsDropdown: Locator;
+  private readonly tagsCombobox: Locator;
   private readonly expiryDateInput: Locator;
 
   // Buttons
@@ -56,6 +57,10 @@ export class InviteCandidatesModalComponent {
       .locator("div")
       .filter({ hasText: /^Tags$/ })
       .locator("input, .dropdown-field");
+    // Specific combobox for tags input
+    this.tagsCombobox = page
+      .locator('[role="combobox"]')
+      .filter({ hasText: "" });
     this.expiryDateInput = page.locator("input").filter({
       hasText: /^DD\/MM\/YY$/,
     });
@@ -120,11 +125,8 @@ export class InviteCandidatesModalComponent {
     }
 
     if (tags && tags.length > 0) {
-      // Tags implementation would depend on the specific dropdown component
-      // This is a simplified version
-      await this.tagsDropdown.click();
       for (const tag of tags) {
-        await this.page.getByText(tag).click();
+        await this.addTag(tag);
       }
     }
 
@@ -136,6 +138,64 @@ export class InviteCandidatesModalComponent {
         has: this.page.locator(`td:has-text("${email}")`),
       })
     ).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Add a tag to the current candidate form
+   * @param tagName - Name of the tag to add
+   * @returns - Promise that resolves when the tag is added
+   */
+  async addTag(tagName: string): Promise<void> {
+    await this.tagsCombobox.click();
+    await this.tagsCombobox.fill(tagName);
+
+    // Check if the tag already exists in the dropdown
+    const existingTag = this.page
+      .getByText(tagName)
+      .filter({ hasText: tagName });
+    const hasExistingTag = (await existingTag.count()) > 0;
+
+    if (hasExistingTag) {
+      // Click the existing tag option
+      await existingTag.click();
+    } else {
+      // Create a new tag by pressing Enter
+      await this.page.keyboard.press("Enter");
+    }
+
+    // Verify the tag is added to the form
+    await expect(this.page.getByText(tagName)).toBeVisible();
+  }
+
+  /**
+   * Remove a tag from the current candidate form
+   * @param tagName - Name of the tag to remove
+   * @returns - Promise that resolves when the tag is removed
+   */
+  async removeTag(tagName: string): Promise<void> {
+    await this.page.getByRole("button", { name: `Remove ${tagName}` }).click();
+    await expect(this.page.getByText(tagName)).not.toBeVisible();
+  }
+
+  /**
+   * Check if a tag exists in the dropdown
+   * @param tagName - Tag name to search for
+   * @returns - Promise that resolves to boolean indicating if tag exists
+   */
+  async tagExistsInDropdown(tagName: string): Promise<boolean> {
+    await this.tagsCombobox.click();
+    await this.tagsCombobox.fill(tagName);
+
+    const noOptions = this.page.getByText("No options");
+    const tagOption = this.page.getByText(tagName).filter({ hasText: tagName });
+
+    const hasNoOptions = await noOptions.isVisible();
+    const hasTagOption = await tagOption.isVisible();
+
+    // Close the dropdown
+    await this.page.keyboard.press("Escape");
+
+    return !hasNoOptions && hasTagOption;
   }
 
   /**
