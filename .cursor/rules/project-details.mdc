@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Playwright, TypeScript, and pnpm Usage
+
+This project uses [Playwright](mdc:https:/playwright.dev) for end-to-end testing, with all tests and page objects written in TypeScript.
+
+- Playwright test files are located in the `tests/` directory and use `.ts` extensions.
+- Page Object Model (POM) classes are in the `pages/` directory and are also written in TypeScript.
+- The project uses [pnpm](mdc:https:/pnpm.io) as the package manager. All dependencies should be installed and managed using pnpm commands (e.g., `pnpm install`, `pnpm add <package>`).
+- Do **not** use `npm` or `yarn` for dependency management in this repository.
+
+## Example Commands
+
+- Install dependencies: `pnpm install`
+- Add a new package: `pnpm add <package>`
+- Run Playwright tests: `pnpm exec playwright test`
+
+Refer to [package.json](mdc:package.json) and [pnpm-lock.yaml](mdc:pnpm-lock.yaml) for dependency management details.
