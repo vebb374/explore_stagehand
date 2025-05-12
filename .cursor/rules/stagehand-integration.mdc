@@ -1,0 +1,49 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Stagehand Integration
+
+[stagehand.config.ts](mdc:evaluate_stagehand/evaluate_stagehand/evaluate_stagehand/stagehand.config.ts) provides configuration for Stagehand integration.
+
+## When to Use Stagehand
+
+Use Stagehand ONLY when:
+- User asks to implement stagehand specifically
+- Tests are particularly flaky or complex
+- Standard Playwright selectors fail consistently
+- DOM structure is highly dynamic or unpredictable
+- As a fallback mechanism when traditional methods fail
+
+## Stagehand Methods
+
+- `act` - Takes an action on the page: `await page.act("Click the sign in button");`
+- `observe` - Plans an instruction before taking action: `const [action] = await page.observe("Click the sign in button");`
+- `extract` - Extracts data from the page: 
+```typescript
+const { data } = await page.extract({
+  instruction: "extract the sign in button text",
+  schema: z.object({ text: z.string() }),
+});
+```
+
+## Initialization Example
+
+```typescript
+import { Stagehand } from "@browserbasehq/stagehand";
+import StagehandConfig from "./stagehand.config";
+
+const stagehand = new Stagehand(StagehandConfig);
+await stagehand.init();
+
+const page = stagehand.page; // Enhanced Playwright Page
+const context = stagehand.context; // Playwright BrowserContext
+```
+
+## Best Practices
+
+- Cache results of `observe` and use them as params for `act`
+- Make act instructions atomic and specific
+- Use appropriate schemas with `extract`
+- Only use Stagehand when standard Playwright approaches are insufficient

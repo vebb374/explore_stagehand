@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Architecture and Page Object Model (POM) Pattern
+
+This project follows the Page Object Model (POM) pattern, a design pattern for test automation that creates an object repository for UI elements.
+
+## Core Architecture
+
+- [pages/base-page.ts](mdc:evaluate_stagehand/evaluate_stagehand/pages/base-page.ts) - Base class with common methods
+- [pages/recruiter/assessment/assessment-overview-page.ts](mdc:evaluate_stagehand/evaluate_stagehand/pages/recruiter/assessment/assessment-overview-page.ts) - Page-specific elements and actions
+- [tests/recruiter/assessment/invite_candidates.spec.ts](mdc:evaluate_stagehand/evaluate_stagehand/tests/recruiter/assessment/invite_candidates.spec.ts) - Test files that use page objects
+
+## Component Organization
+
+For complex pages with many elements, we organize into component objects:
+
+- `/pages/` - Main directory for page objects
+- `/pages/common-components/` - Shared components across multiple pages
+- `/pages/recruiter/assessment/components/` - Components specific to assessment pages
+
+Example component: [pages/recruiter/assessment/components/invite-candidates-modal.component.ts](mdc:evaluate_stagehand/evaluate_stagehand/pages/recruiter/assessment/components/invite-candidates-modal.component.ts)
+
+## POM Implementation Rules
+
+- Declare locators at class level but initialize them in the constructor after super() call
+- Do NOT initialize locators at declaration time (this.page may be undefined)
+- Use components for pages with many elements (20+ locators)
+
+## Folder Structure
+
+```
+/pages/
+  /base-page.ts
+  /landing-page.ts
+  /recruiter/
+    /assessment/
+      /components/
+      assessment-overview-page.ts
+      assessment-dashboard-page.ts
+      invited-candidates-page.ts
+    /common/
+      top-navbar.component.ts
+    /login-page/
+      recruiter-login-page.ts
+/tests/
+  /recruiter/
+    /assessment/
+      invite_candidates.spec.ts
+      create_assessment.spec.ts
