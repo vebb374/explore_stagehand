@@ -5,6 +5,7 @@ import { TopNavbarComponent } from "../common/top-navbar.component.js";
 export class AssessmentDashboardPage extends BasePage {
   readonly topNav: TopNavbarComponent;
   private readonly createNewTestButton: Locator;
+  private readonly testCard: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -13,6 +14,7 @@ export class AssessmentDashboardPage extends BasePage {
     this.createNewTestButton = page.getByRole("button", {
       name: "Create new test",
     });
+    this.testCard = page.locator(".test-card");
   }
 
   async waitForPageLoad() {
@@ -21,5 +23,9 @@ export class AssessmentDashboardPage extends BasePage {
 
   async clickCreateNewTest() {
     await this.createNewTestButton.click();
+  }
+
+  async clickFirstTest() {
+    await this.testCard.first().click();
   }
 }
