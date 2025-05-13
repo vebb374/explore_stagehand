@@ -20,9 +20,11 @@ export class LoginPage extends BasePage {
     super(page);
 
     // Initialize locators after super() call
-    this.emailInput = this.page.locator("#id_email");
-    this.passwordInput = this.page.locator("#id_password");
-    this.loginButton = this.page.locator('input[type="submit"][value="Login"]');
+    this.emailInput = this.page.getByRole('textbox', { name: 'Username or e-mail' })
+                    .or(this.page.locator("#id_email"))
+                    .first();
+    this.passwordInput = this.page.getByRole('textbox', { name: 'Password' }).or(this.page.locator("#id_password")).first();
+    this.loginButton = this.page.locator('input[type="submit"][value="Login"]').or(this.page.locator('input[type="submit"][value="Log In"]')).first();
   }
 
   /**
@@ -30,15 +32,11 @@ export class LoginPage extends BasePage {
    * @param timeout - Time to wait in milliseconds
    */
   async waitForLoginForm(timeout = 10000) {
-    try {
       await this.emailInput.waitFor({
-        state: "visible",
+        state: "attached",
         timeout,
       });
-    } catch (error) {
-      console.error("Login form did not appear within timeout", error);
-      throw new Error("Login form not visible after timeout");
-    }
+
   }
 
   /**

@@ -17,7 +17,7 @@ export async function loginAsRecruiter(
   email: string,
   password: string
 ) {
-  await page.goto("/recruiters/login");
+  await page.goto("/recruiters/login", { waitUntil: "domcontentloaded" });
   const loginPage = new LoginPage(page);
   await loginPage.login(email, password);
 }
