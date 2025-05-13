@@ -28,4 +28,8 @@ export class TopNavbarComponent {
   async navigateToInterviews() {
     await this.interviewsLink.click();
   }
+
+  async isAssessmentsLinkVisible(): Promise<boolean> {
+    return this.assessmentsLink.isVisible();
+  }
 }

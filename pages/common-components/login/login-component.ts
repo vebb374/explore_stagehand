@@ -90,3 +90,24 @@ export class LoginPage extends BasePage {
     await this.clickLoginButton();
   }
 }
+
+// Add helper functions to perform candidate and recruiter logins
+export async function loginAsCandidate(
+  page: Page,
+  email: string,
+  password: string
+) {
+  await page.goto("/login");
+  const loginPage = new LoginPage(page);
+  await loginPage.login(email, password);
+}
+
+export async function loginAsRecruiter(
+  page: Page,
+  email: string,
+  password: string
+) {
+  await page.goto("/recruiters/login");
+  const loginPage = new LoginPage(page);
+  await loginPage.login(email, password);
+}

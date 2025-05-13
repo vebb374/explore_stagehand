@@ -18,13 +18,20 @@
       ],
       "tests/*": [
         "tests/*"
+      ],
+      "utils/*": [
+        "utils/*"
+      ],
+      "utils": [
+        "utils/index"
       ]
     }
   },
   "include": [
     "*.ts",
     "pages/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "utils/**/*"
   ],
   "exclude": [
     "node_modules",
