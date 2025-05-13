@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test artifacts
+test-results/
+playwright-report/
+.pytest_cache/
+
+# Large data files
+test-data/candidates/infy_pref_test_users_40K/
+
+# Reports
+/test-results/
+
+# System files
+.DS_Store
+
+# Playwright browser binaries
+/playwright/.cache/
+
+# Environment variables and secrets
+.env 
