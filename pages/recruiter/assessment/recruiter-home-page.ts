@@ -1,6 +1,6 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { BasePage } from "../../base-page.js";
-import { TopNavbarComponent } from "../common/top-navbar.component.js";
+import { BasePage } from "pages/base-page.js";
+import { TopNavbarComponent } from "./top-navbar.component.js";
 
 export class AssessmentDashboardPage extends BasePage {
   readonly topNav: TopNavbarComponent;
@@ -25,7 +25,7 @@ export class AssessmentDashboardPage extends BasePage {
     await this.createNewTestButton.click();
   }
 
-  async clickFirstTest() {
+  async clickFirstVisibleTestCard() {
     await this.testCard.first().click();
   }
 }

@@ -1,5 +1,5 @@
 import { Page, Locator } from "@playwright/test";
-import { BasePage } from "../../base-page.js";
+import { BasePage } from "../base-page.js";
 
 export class MultipleSessionsPage extends BasePage {
   private readonly logoutAllSessionsButton: Locator;

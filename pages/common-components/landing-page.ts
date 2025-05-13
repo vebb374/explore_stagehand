@@ -1,5 +1,5 @@
 import { Locator, Page } from "@playwright/test";
-import { BasePage } from "./base-page.js";
+import { BasePage } from "../base-page.js";
 
 /**
  * HackerEarth Home Page object
@@ -36,17 +36,6 @@ export class HomePage extends BasePage {
    * Falls back to text-based selector using .or()
    */
   async clickLoginButton() {
-    try {
-      await this.loginButton.click();
-    } catch (error) {
-      // If both selectors in the chain fail, use Stagehand as last resort
-      console.log(
-        "Regular selectors failed, using Stagehand as fallback",
-        error
-      );
-      await this.actWithStagehand(
-        "Click the login button at the top of the page"
-      );
-    }
+    await this.loginButton.click();
   }
 }

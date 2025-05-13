@@ -1,7 +1,7 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { BasePage } from "../../base-page.js";
-import { TopNavbarComponent } from "../common/top-navbar.component.js";
-import { InviteCandidatesModalComponent } from "./components/invite-candidates-modal.component.js";
+import { BasePage } from "../../../base-page.js";
+import { TopNavbarComponent } from "../top-navbar.component.js";
+import { InviteCandidatesModalComponent } from "../components/invite-candidates-modal.component.js";
 
 /**
  * Page object for the Assessment Overview page
