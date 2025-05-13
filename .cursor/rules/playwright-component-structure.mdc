@@ -1,0 +1,73 @@
+---
+description: when creating files in pages/ or tests/ in the codebase (it provides details about folder structure)
+globs: 
+alwaysApply: false
+---
+# Playwright Component Structure
+
+Pages should be broken down into logical components to improve maintainability and reusability. Components are parts of a page that can be tested independently.
+
+## Structure Guidelines
+
+1. Organize files by feature/page, then by component
+2. Only page files should be imported directly in test files
+3. Components should be imported by their parent page or component
+
+## Example Directory Structure
+
+```
+pages/
+  ├── common-components/       # Shared components used across pages
+  │   ├── TopNavComponent.ts
+  │   └── SidebarComponent.ts
+  ├── recruiter/
+  │   ├── assessment/
+  │   │   ├── overview/
+  │   │   │   ├── AssessmentOverviewPage.ts      # Main page file
+  │   │   │   └── components/                    # Components specific to this page
+  │   │   │       ├── SettingsComponent.ts
+  │   │   │       ├── QuestionsOverviewComponent.ts
+  │   │   │       └── OtherDetailsComponent.ts
+  │   │   └── components/                      # Shared components within assessment context
+  │   │       └── AssessmentNavigationComponent.ts
+  │   └── interview/
+  │       └── [...]
+  └── candidate/
+      └── [...]
+tests/
+  ├── recruiter/
+  │   ├── assessment/
+  │   │   └── overview.spec.ts                 # Tests for assessment overview page
+  │   └── interview/
+  │       └── [...]
+  └── candidate/
+      └── [...]
+```
+
+## Component Implementation Example
+
+```typescript
+// pages/recruiter/assessment/overview/components/QuestionsOverviewComponent.ts
+import { Locator, Page } from '@playwright/test';
+
+export class QuestionsOverviewComponent {
+  readonly page: Page;
+  readonly container: Locator;
+  readonly questionTypeHeader: Locator;
+  readonly difficultyLevelHeader: Locator;
+  readonly questionTypeRow: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.container = page.locator('section[aria-label="Questions Overview"]');
+    this.questionTypeHeader = this.container.getByRole('columnheader', { name: 'Question type' });
+    this.difficultyLevelHeader = this.container.getByRole('columnheader', { name: 'Difficulty level' });
+    this.questionTypeRow = this.container.getByRole('row').filter({ hasText: 'SQL' });
+  }
+
+  async getQuestionCount(): Promise<string> {
+    const questionsElement = this.container.getByText(/Questions/);
+    return await questionsElement.textContent() || '';
+  }
+}
+```

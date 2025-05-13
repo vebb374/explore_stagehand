@@ -1,0 +1,89 @@
+---
+description: 
+globs: tests/**/*.ts
+alwaysApply: false
+---
+# Playwright Test Data Management
+
+Each test should properly handle test data to ensure isolation and maintainability. This rule provides guidance on test data management in our TypeScript Playwright framework.
+
+## Key Principles
+
+1. **Test Isolation**: Each test should be completely independent
+2. **Data Creation**: Tests should create or fetch their own test data
+3. **Cleanup**: Tests should clean up any data they create
+4. **No Shared State**: Don't rely on data created by other tests
+
+## Credential Management
+
+We use two main approaches for handling test credentials:
+
+### 1. Fixtures for Dynamic Credentials
+
+Use fixtures to generate or retrieve unique credentials, especially for candidate tests:
+
+```typescript
+// tests/candidate/login.spec.ts
+import { test, expect } from '../fixtures.js';
+import { loginAsCandidate } from 'pages/common-components/login/login-page.js';
+
+test.describe('Candidate Login', () => {
+  test('should login as candidate with unique credentials', async ({ page, getUniqueCandidateCredentials }) => {
+    const { email, password } = getUniqueCandidateCredentials;
+    
+    // Navigate to login page and login with unique candidate credentials
+    await loginAsCandidate(page, email, password);
+    
+    // Verify login is successful
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  });
+});
+```
+
+### 2. Utility Functions for Known Test Data
+
+For recruiter/admin tests, use utility functions to access known test data:
+
+```typescript
+// tests/recruiter/login/test_login.spec.ts
+import { test, expect } from "@playwright/test";
+import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
+import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar.component.js";
+import { getCompanyData } from "utils/index.js";
+
+test.describe("Recruiter Login", () => {
+  test("should login successfully and see assessments link", async ({ page }) => {
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
+    await loginAsRecruiter(page, ADMIN, PASSWORD);
+    // Test assertions...
+  });
+});
+```
+
+## Test Data Storage
+
+Keep test data organized in appropriate directories:
+
+```
+test-data/
+  ├── candidates/           # Candidate test data
+  ├── companies/            # Company/recruiter test data
+  └── fixtures/             # Common test fixtures
+```
+
+## Dynamic Data Generation
+
+When needed, create helper functions for generating dynamic test data:
+
+```typescript
+// utils/test-data-generator.ts
+export function generateUniqueEmail(): string {
+  return `test-${Date.now()}@example.com`;
+}
+
+export function generateAssessmentName(): string {
+  return `Test Assessment ${Date.now()}`;
+}
+```
+
+> **Note**: For information about project architecture, TypeScript configuration, import paths, and pnpm usage, see the [Playwright Project Architecture](mdc:AuQA/playwright-project-architecture.mdc) rule.

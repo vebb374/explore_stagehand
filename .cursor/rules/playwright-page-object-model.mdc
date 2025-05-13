@@ -1,0 +1,64 @@
+---
+description: 
+globs: *.ts
+alwaysApply: false
+---
+# Playwright Page Object Model Pattern
+
+Each page in our application should have a corresponding Page Object Model (POM) file to improve maintainability and scalability. The POM file should contain all selectors and functions related to that page.
+
+## Key Rules
+
+1. All page interactions should be done via page objects
+2. No selectors should be in test files
+3. All assertions should be in test files, not in POM files
+
+## Structure
+
+- Tests should be in the `tests/` directory
+- Page objects should be in the `pages/` directory
+- Components (parts of a page) should be in appropriate subdirectories
+
+## Example
+
+```typescript
+// pages/assessment/overview/AssessmentOverviewPage.ts
+import { Locator, Page } from '@playwright/test';
+import { SettingsComponent } from './components/SettingsComponent';
+import { QuestionsOverviewComponent } from './components/QuestionsOverviewComponent';
+
+export class AssessmentOverviewPage {
+  readonly page: Page;
+  readonly pageTitle: Locator;
+  readonly settings: SettingsComponent;
+  readonly questionsOverview: QuestionsOverviewComponent;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.pageTitle = page.getByRole('heading', { name: 'Overview' });
+    this.settings = new SettingsComponent(page);
+    this.questionsOverview = new QuestionsOverviewComponent(page);
+  }
+
+  async navigateTo(assessmentId: string): Promise<void> {
+    await this.page.goto(`/assessment/${assessmentId}/overview`);
+  }
+}
+
+// tests/assessment/overview.spec.ts
+import { test, expect } from '@playwright/test';
+import { AssessmentOverviewPage } from '../../pages/assessment/overview/AssessmentOverviewPage';
+
+test.describe('Assessment Overview', () => {
+  let assessmentOverviewPage: AssessmentOverviewPage;
+
+  test.beforeEach(async ({ page }) => {
+    assessmentOverviewPage = new AssessmentOverviewPage(page);
+    await assessmentOverviewPage.navigateTo('test-assessment-id');
+  });
+
+  test('displays assessment overview', async () => {
+    await expect(assessmentOverviewPage.pageTitle).toBeVisible();
+    await expect(assessmentOverviewPage.questionsOverview.questionTypeRow).toBeVisible();
+  });
+});

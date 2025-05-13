@@ -1,0 +1,102 @@
+---
+description: when creating .ts files
+globs: 
+alwaysApply: false
+---
+# Playwright Naming Conventions
+
+Consistent naming conventions make our code more readable and maintainable. Follow these conventions for all Playwright tests.
+
+## File Naming
+
+1. **Page Objects**: Use PascalCase and end with "Page"
+   - `AssessmentOverviewPage.ts`
+   - `LoginPage.ts`
+
+2. **Components**: Use PascalCase and end with "Component"
+   - `SettingsComponent.ts`
+   - `QuestionTableComponent.ts`
+
+3. **Test Files**: Use kebab-case and end with ".spec.ts"
+   - `assessment-overview.spec.ts`
+   - `login-functionality.spec.ts`
+
+## Variable & Function Naming
+
+1. **Variables**: Use camelCase
+   ```typescript
+   const userEmail = 'test@example.com';
+   ```
+
+2. **Boolean Variables**: Start with "is", "has", "are", or "have"
+   ```typescript
+   const isLoggedIn = true;
+   const hasPermission = false;
+   ```
+
+3. **Locators**: Use descriptive names that identify the element's purpose
+   ```typescript
+   readonly submitButton: Locator;
+   readonly emailInput: Locator;
+   readonly errorMessage: Locator;
+   ```
+
+4. **Function Names**: Start with a verb that describes the action
+   ```typescript
+   async navigateToOverview(): Promise<void> { ... }
+   async fillLoginForm(email: string, password: string): Promise<void> { ... }
+   async getQuestionCount(): Promise<number> { ... }
+   ```
+
+5. **Classes**: Use PascalCase
+   ```typescript
+   export class AssessmentOverviewPage { ... }
+   export class QuestionTableComponent { ... }
+   ```
+
+## Test Naming
+
+Tests should be named to clearly indicate what they're verifying:
+
+```typescript
+test('should display error message with invalid credentials', async () => { ... });
+test('should navigate to dashboard after successful login', async () => { ... });
+```
+
+## Example with Proper Naming
+
+```typescript
+// pages/recruiter/assessment/overview/AssessmentOverviewPage.ts
+import { Locator, Page } from '@playwright/test';
+import { SettingsComponent } from './components/SettingsComponent';
+
+export class AssessmentOverviewPage {
+  readonly page: Page;
+  readonly pageTitle: Locator;
+  readonly settingsComponent: SettingsComponent;
+  readonly inviteCandidatesButton: Locator;
+  
+  constructor(page: Page) {
+    this.page = page;
+    this.pageTitle = page.getByRole('heading', { name: 'Overview' });
+    this.settingsComponent = new SettingsComponent(page);
+    this.inviteCandidatesButton = page.getByRole('button', { name: 'Invite candidates' });
+  }
+  
+  async navigateTo(assessmentId: string): Promise<void> {
+    await this.page.goto(`/assessment/${assessmentId}/overview`);
+  }
+  
+  async inviteCandidates(): Promise<void> {
+    await this.inviteCandidatesButton.click();
+  }
+}
+
+// tests/recruiter/assessment/overview.spec.ts
+test('should display settings section on assessment overview page', async ({ page }) => {
+  const assessmentPage = new AssessmentOverviewPage(page);
+  await assessmentPage.navigateTo('test-id');
+  
+  await expect(assessmentPage.settingsComponent.container).toBeVisible();
+});
+```

@@ -1,0 +1,138 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Playwright Project Architecture
+
+This rule provides information about our project's architecture, structure, and tooling for Playwright tests.
+
+## Project Structure
+
+Our Playwright testing project follows this high-level structure:
+
+```
+AuQA/
+  ├── pages/               # Page objects and components
+  │   ├── candidate/       # Candidate-specific pages
+  │   ├── common-components/ # Shared components across user types
+  │   │   └── login/       # Login-related components
+  │   └── recruiter/       # Recruiter-specific pages
+  │       ├── assessment/  # Assessment-related pages
+  │       └── interview/   # Interview-related pages
+  ├── tests/               # Test files
+  │   ├── candidate/       # Candidate-specific tests
+  │   └── recruiter/       # Recruiter-specific tests
+  │       ├── assessment/  # Assessment-related tests
+  │       ├── interview/   # Interview-related tests
+  │       └── login/       # Login-related tests
+  ├── test-data/           # Test data files
+  │   ├── candidates/      # Candidate test data
+  │   └── companies/       # Company test data
+  ├── utils/               # Utility functions
+  ├── .env                 # Environment variables
+  ├── playwright.config.ts # Playwright configuration
+  └── tsconfig.json        # TypeScript configuration
+```
+
+## TypeScript Configuration
+
+We use TypeScript for type safety. Our tsconfig.json includes path aliases to make imports cleaner:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": false,
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": {
+      "pages/*": ["pages/*"],
+      "tests/*": ["tests/*"],
+      "utils/*": ["utils/*"],
+      "utils": ["utils/index"]
+    }
+  }
+}
+```
+
+## Import Paths
+
+When importing files, use the path aliases defined in tsconfig.json:
+
+```typescript
+// GOOD - Using path aliases
+import { LoginPage } from 'pages/common-components/login/login-page';
+import { getCompanyData } from 'utils';
+
+// BAD - Using relative paths
+import { LoginPage } from '../../pages/common-components/login/login-page';
+```
+
+Available path aliases:
+- `pages/*` - For page objects and components
+- `tests/*` - For test files and fixtures
+- `utils/*` - For utility functions
+- `utils` - Shorthand for utils/index
+
+## Package Management with pnpm
+
+We use pnpm as our package manager for faster installations and better disk space efficiency.
+
+### Common pnpm Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Add a new dependency
+pnpm add -D @playwright/test
+
+# Run tests
+pnpm test
+
+# Install Playwright browsers
+pnpm exec playwright install
+
+# Generate a new Playwright report
+pnpm exec playwright show-report
+```
+
+### Script Naming Conventions
+
+In package.json, our scripts follow these naming conventions:
+
+```json
+{
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:smoke": "playwright test --grep @smoke"
+  }
+}
+```
+
+## Environment Variables
+
+Environment-specific configuration is managed through .env files:
+
+```
+# .env
+BASE_URL=https://example.com
+API_BASE_URL=https://api.example.com
+```
+
+Access environment variables in tests:
+
+```typescript
+const baseUrl = process.env.BASE_URL || 'https://default-url.com';
+```

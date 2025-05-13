@@ -1,0 +1,65 @@
+---
+description: this provides details about  priority of  playwright selectors
+globs: 
+alwaysApply: false
+---
+# Playwright Selector Strategy
+
+When selecting elements in your Playwright tests, prefer selectors that query for elements in a way that reflects how users would interact with them. This makes tests more resilient to changes and better represents user behavior.
+
+## Selector Priority (In Order of Preference)
+
+1. `getByRole` - Queries for elements by their ARIA role, accessible name, and/or accessible state
+2. `getByLabelText` - Queries for form elements associated with label text
+3. `getByPlaceholderText` - Queries for elements with placeholder text
+4. `getByText` - Queries for elements containing specific text
+5. `getByDisplayValue` - Queries for form elements with specific display value
+6. `getByAltText` - Queries for elements with alt text (usually images)
+7. `getByTitle` - Queries for elements with title attribute
+8. `getByTestId` - Queries for elements with data-testid attribute (use only when above options don't work)
+
+## Good Practices
+
+```typescript
+// GOOD - Using semantic selectors
+const saveButton = page.getByRole('button', { name: 'Save' });
+const nameInput = page.getByLabel('Full Name');
+const emailField = page.getByPlaceholderText('Enter your email');
+const errorMessage = page.getByText('Invalid credentials');
+const profileImage = page.getByAltText('User profile');
+```
+
+## Bad Practices to Avoid
+
+```typescript
+// BAD - Using CSS selectors tied to implementation
+const saveButton = page.locator('.btn-primary');
+const nameInput = page.locator('input#name_field');
+const errorMessage = page.locator('.error-container > p');
+const profileImage = page.locator('.profile-section img');
+```
+
+## When to Use Test IDs
+
+Only use test IDs as a last resort, when elements cannot be selected using more semantic methods:
+
+```typescript
+// Only when necessary - Using data-testid
+const specialWrapper = page.getByTestId('question-container');
+```
+
+## Locating Elements Within Components
+
+When working with components, define all locators relative to the component's container to ensure proper scoping:
+
+```typescript
+export class QuestionTableComponent {
+  readonly container: Locator;
+  
+  constructor(page: Page) {
+    this.container = page.locator('[data-testid="question-table"]');
+    this.questionTypeHeader = this.container.getByRole('columnheader', { name: 'Question type' });
+    this.difficultyLevelCell = this.container.getByRole('cell', { name: 'Easy' });
+  }
+}
+```
