@@ -1,10 +1,10 @@
-import { test, expect } from '@playwright/test';
-import { AssessmentOverviewPage } from '../../../pages/recruiter/assessment/overview/assessment-overview-page.js';
-import { InviteCandidatesModal } from '../../../pages/recruiter/assessment/components/invite/invite-candidates-modal.js';
-import { loginAsRecruiter } from '../../../pages/common-components/login/login-page.js';
-import { getCompanyData } from '../../../utils/index.js';
+import { test, expect } from "@playwright/test";
+import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/assessment-overview-page.js";
+import { InviteCandidatesModal } from "pages/recruiter/assessment/components/invite-candidates-modal.ts";
+import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
+import { getCompanyData } from "utils/index.js";
 
-test.describe('@functional Assessment Candidate Invitation Flow', () => {
+test.describe("@functional Assessment Candidate Invitation Flow", () => {
   // Use unique email for each test to avoid conflicts
   const generateUniqueEmail = () => {
     return `test-${Date.now()}@example.com`;
@@ -18,17 +18,17 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     await loginAsRecruiter(page, ADMIN, PASSWORD);
     
     // Navigate to assessments page
-    await page.getByRole('link', { name: 'Assessments', exact: true }).click();
+    await page.getByRole("link", { name: "Assessments", exact: true }).click();
     
     // Click on the first test card (replace with your actual selector or search for specific test)
-    await page.getByText('[he-qa] SQL TEST').first().click();
+    await page.getByText("[he-qa] SQL TEST").first().click();
     
     // Create and initialize the AssessmentOverviewPage object
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     await assessmentOverviewPage.waitForPageLoad();
   });
 
-  test('@smoke should open invite candidates modal when clicking on invite button', async ({ page }) => {
+  test("@smoke should open invite candidates modal when clicking on invite button", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     
@@ -45,26 +45,26 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     await inviteModal.closeModal();
   });
 
-  test('should validate email is required when adding a candidate', async ({ page }) => {
+  test("should validate email is required when adding a candidate", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
     
     // Act
     // Leave email field blank
-    await inviteModal.emailInput.fill('');
+    await inviteModal.emailInput.fill("");
     await inviteModal.addCandidateButton.click();
     
     // Assert
     // Check for validation error message (adjust selector based on your UI)
-    const errorMessage = page.locator('text=Email is required');
+    const errorMessage = page.locator("text=Email is required");
     await expect(errorMessage).toBeVisible();
     
     // Clean up
     await inviteModal.closeModal();
   });
 
-  test('@smoke should successfully invite a candidate with email only', async ({ page }) => {
+  test("@smoke should successfully invite a candidate with email only", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
@@ -87,16 +87,16 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     
     // Verify invitation status
     const status = await assessmentOverviewPage.getCandidateInvitationStatus(testEmail);
-    expect(status).toContain('Processed');
+    expect(status).toContain("Processed");
   });
 
-  test('should successfully invite a candidate with all details', async ({ page }) => {
+  test("should successfully invite a candidate with all details", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
     const testEmail = generateUniqueEmail();
-    const firstName = 'Test';
-    const lastName = 'Candidate';
+    const firstName = "Test";
+    const lastName = "Candidate";
     
     // Act
     await inviteModal.addCandidate(testEmail, firstName, lastName);
@@ -114,16 +114,16 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     expect(candidateExists).toBeTruthy();
     
     // Verify candidate name appears in the table
-    const candidateTable = page.locator('table');
+    const candidateTable = page.locator("table");
     await expect(candidateTable).toContainText(firstName);
     await expect(candidateTable).toContainText(lastName);
     
     // Verify invitation status
     const status = await assessmentOverviewPage.getCandidateInvitationStatus(testEmail);
-    expect(status).toContain('Processed');
+    expect(status).toContain("Processed");
   });
 
-  test('should show updated count in invited tab after invitation', async ({ page }) => {
+  test("should show updated count in invited tab after invitation", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     
@@ -150,7 +150,7 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     expect(updatedCount).toBeGreaterThan(initialCount);
   });
 
-  test('should be able to close modal without inviting candidates', async ({ page }) => {
+  test("should be able to close modal without inviting candidates", async ({ page }) => {
     // Arrange
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
@@ -159,7 +159,7 @@ test.describe('@functional Assessment Candidate Invitation Flow', () => {
     await inviteModal.closeModal();
     
     // Assert
-    await expect(inviteModal.modalTitle).not.toBeVisible();
+    await expect(inviteModal.modalTitle).toBeHidden();
     
     // Verify we're still on the assessment overview page by checking if we can open the modal again
     const reopenModal = await assessmentOverviewPage.openInviteCandidatesModal();

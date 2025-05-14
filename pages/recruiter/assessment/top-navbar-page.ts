@@ -1,11 +1,13 @@
 import { Locator, Page } from "@playwright/test";
+import { BasePage } from "pages/base-page.js";
 
-export class TopNavbarComponent {
+export class TopNavbarComponent extends BasePage {
   private readonly assessmentsLink: Locator;
   private readonly homeLink: Locator;
   private readonly interviewsLink: Locator;
 
-  constructor(private page: Page) {
+  constructor(page: Page) {
+    super(page);
     this.assessmentsLink = page.getByRole("link", {
       name: "Assessments",
       exact: true,

@@ -1,7 +1,7 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { BasePage } from "../../../base-page.js";
 import { TopNavbarComponent } from "../top-navbar-page.js";
-import { InviteCandidatesModal } from "../components/invite/invite-candidates-modal.js";
+import { InviteCandidatesModal } from "pages/recruiter/assessment/invite-component/invite-candidates-modal.js";
+import { BasePage } from "pages/base-page.js";
 
 /**
  * Page object for the Assessment Overview page
@@ -57,11 +57,11 @@ export class AssessmentOverviewPage extends BasePage {
     this.invitedTab = page.getByRole("link", { name: /Invited/i });
 
     // Page elements
-    this.assessmentMetrics = page.locator('div.grid').filter({ hasText: /Total candidates/ });
-    this.candidateStatusTabs = page.locator('div[role="tablist"]');
-    this.invitedCandidatesTab = page.getByRole('tab', { name: /Invited/ });
-    this.candidatesTable = page.locator('table');
-    this.successToast = page.locator('div[role="status"]');
+    this.assessmentMetrics = page.locator("div.grid").filter({ hasText: /Total candidates/ });
+    this.candidateStatusTabs = page.locator("div[role=\"tablist\"]");
+    this.invitedCandidatesTab = page.getByRole("tab", { name: /Invited/ });
+    this.candidatesTable = page.locator("table");
+    this.successToast = page.locator("div[role=\"status\"]");
   }
 
   /**
@@ -87,7 +87,7 @@ export class AssessmentOverviewPage extends BasePage {
   async clickInviteCandidates(): Promise<InviteCandidatesModal> {
     await this.inviteCandidatesButton.click();
     const inviteModal = new InviteCandidatesModal(this.page);
-    await inviteModal.modalTitle.waitFor({ state: 'visible' });
+    await inviteModal.modalTitle.waitFor({ state: "visible" });
     return inviteModal;
   }
 
@@ -128,7 +128,7 @@ export class AssessmentOverviewPage extends BasePage {
     await this.inviteCandidatesButton.click();
     const inviteCandidatesModal = new InviteCandidatesModal(this.page);
     // Wait for the modal to be visible
-    await inviteCandidatesModal.modalTitle.waitFor({ state: 'visible' });
+    await inviteCandidatesModal.modalTitle.waitFor({ state: "visible" });
     return inviteCandidatesModal;
   }
 
@@ -152,7 +152,7 @@ export class AssessmentOverviewPage extends BasePage {
    * Checks if a candidate exists in the candidates table
    */
   async checkCandidateExists(email: string): Promise<boolean> {
-    const tableRows = this.candidatesTable.locator('tbody tr');
+    const tableRows = this.candidatesTable.locator("tbody tr");
     const count = await tableRows.count();
     
     for (let i = 0; i < count; i++) {
@@ -169,13 +169,13 @@ export class AssessmentOverviewPage extends BasePage {
    * Gets the invitation status of a candidate
    */
   async getCandidateInvitationStatus(email: string): Promise<string | null> {
-    const tableRows = this.candidatesTable.locator('tbody tr');
+    const tableRows = this.candidatesTable.locator("tbody tr");
     const count = await tableRows.count();
     
     for (let i = 0; i < count; i++) {
       const rowText = await tableRows.nth(i).textContent();
       if (rowText && rowText.includes(email)) {
-        const statusCell = tableRows.nth(i).locator('td').nth(5);
+        const statusCell = tableRows.nth(i).locator("td").nth(5);
         return await statusCell.textContent();
       }
     }
@@ -187,6 +187,6 @@ export class AssessmentOverviewPage extends BasePage {
    * Wait for success toast to appear
    */
   async waitForSuccessToast() {
-    await this.successToast.waitFor({ state: 'visible' });
+    await this.successToast.waitFor({ state: "visible" });
   }
 }

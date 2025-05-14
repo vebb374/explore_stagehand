@@ -1,5 +1,5 @@
-import { CompanyData } from 'test-data/companies/company-interface.js';
-import qa_test_company_15 from 'test-data/companies/qa_test_company_15.js';
+import { CompanyData } from "test-data/companies/company-interface.js";
+import qa_test_company_15 from "test-data/companies/qa_test_company_15.js";
 
 // Map of all company data files
 const companies = {

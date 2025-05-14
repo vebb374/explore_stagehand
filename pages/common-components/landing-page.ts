@@ -17,7 +17,7 @@ export class HomePage extends BasePage {
     this.loginButton = this.page
       .getByRole("link", { name: "Log In", exact: true })
       .first()
-      .or(this.page.locator('a:has-text("Log In")').first());
+      .or(this.page.locator("a:has-text(\"Log In\")").first());
   }
 
   /**

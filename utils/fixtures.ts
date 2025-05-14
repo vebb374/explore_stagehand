@@ -1,5 +1,5 @@
-import { test as base } from '@playwright/test';
-import { getCandidateCredentials } from 'utils/email-allocator.js';
+import { test as base } from "@playwright/test";
+import { getCandidateCredentials } from "utils/email-allocator.js";
 
 // Define the type for our custom fixtures
 type CustomFixtures = {
@@ -11,7 +11,7 @@ type CustomFixtures = {
  */
 export const test = base.extend<CustomFixtures>({
   // Define candidateCredentials fixture
-  getUniqueCandidateCredentials: async ({}, use, testInfo) => {
+  getUniqueCandidateCredentials: async (_, use, testInfo) => {
     // Get unique credentials based on test title
     const credentials = getCandidateCredentials(testInfo.title);
     console.log(`Using candidate email: ${credentials.email} for test: ${testInfo.title}`);
@@ -21,4 +21,4 @@ export const test = base.extend<CustomFixtures>({
   }
 });
 
-export { expect } from '@playwright/test'; 
+export { expect } from "@playwright/test"; 

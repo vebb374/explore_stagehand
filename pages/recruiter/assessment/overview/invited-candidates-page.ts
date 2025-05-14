@@ -1,5 +1,5 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { BasePage } from "../../../base-page.js";
+import { BasePage } from "pages/base-page.js";
 import { TopNavbarComponent } from "../top-navbar-page.js";
 
 /**

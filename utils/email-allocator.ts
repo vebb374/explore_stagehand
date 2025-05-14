@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import { fileURLToPath } from 'url';
-import { parse } from 'csv-parse/sync';
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
+import { fileURLToPath } from "url";
+import { parse } from "csv-parse/sync";
 
 // Create equivalent of __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +17,7 @@ export class EmailAllocator {
   private initialized = false;
   
   private constructor(csvDirPath?: string) {
-    const dirPath = csvDirPath || path.resolve(__dirname, '../test-data/candidates/infy_pref_test_users_40K');
+    const dirPath = csvDirPath || path.resolve(__dirname, "../test-data/candidates/infy_pref_test_users_40K");
     this.loadEmails(dirPath);
   }
   
@@ -38,12 +38,12 @@ export class EmailAllocator {
     try {
       // Find all CSV files in directory
       const files = fs.readdirSync(dirPath)
-        .filter(file => file.endsWith('.csv'))
+        .filter(file => file.endsWith(".csv"))
         .sort();
       
       for (const file of files) {
         const filePath = path.join(dirPath, file);
-        const content = fs.readFileSync(filePath, 'utf8');
+        const content = fs.readFileSync(filePath, "utf8");
         
         // Parse CSV content
         const records = parse(content, { columns: false });
@@ -59,7 +59,7 @@ export class EmailAllocator {
       console.log(`Loaded ${this.emails.length} candidate emails`);
       this.initialized = true;
     } catch (error) {
-      console.error('Error loading candidate emails:', error);
+      console.error("Error loading candidate emails:", error);
     }
   }
   
@@ -87,11 +87,11 @@ export class EmailAllocator {
    */
   public getEmailForTest(testId: string): string {
     if (!this.initialized || this.emails.length === 0) {
-      throw new Error('No candidate emails loaded');
+      throw new Error("No candidate emails loaded");
     }
     
     // Create hash from test ID
-    const hash = crypto.createHash('sha256').update(testId).digest('hex');
+    const hash = crypto.createHash("sha256").update(testId).digest("hex");
     const hashNum = parseInt(hash.substring(0, 8), 16);
     
     // Find next prime after number of emails
@@ -105,7 +105,7 @@ export class EmailAllocator {
 }
 
 // Default password for all candidates
-export const DEFAULT_CANDIDATE_PASSWORD = 'infy123';
+export const DEFAULT_CANDIDATE_PASSWORD = "infy123";
 
 /**
  * Get a unique email for a test
