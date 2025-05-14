@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
-import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar.component.js";
+import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar-page.js";
 import { getCompanyData } from "utils/index.js";
 
 test.describe("Recruiter Login", () => {

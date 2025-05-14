@@ -11,22 +11,32 @@ These rules ensure our tests are maintainable, reliable, and focused.
 
 1. **Follow the AAA Pattern**: Arrange, Act, Assert
    ```typescript
-   test('should submit form successfully', async () => {
+   test('should submit form successfully', async ({ page }) => {
      // Arrange - setup the test
-     await page.goto('/contact');
+     const contactPage = new ContactPage(page);
+     await contactPage.navigateTo();
      
      // Act - perform the action
-     await page.getByLabel('Name').fill('John Doe');
-     await page.getByLabel('Email').fill('john@example.com');
-     await page.getByRole('button', { name: 'Submit' }).click();
+     await contactPage.fillContactForm('John Doe', 'john@example.com');
+     await contactPage.submitForm();
      
      // Assert - verify the outcome
-     await expect(page.getByText('Thank you for your submission')).toBeVisible();
+     await expect(contactPage.successMessage).toBeVisible();
    });
    ```
 
 2. **One Assertion Per Test**
    Focus each test on verifying one specific behavior. Multiple assertions are acceptable only if they're checking the same logical behavior.
+
+
+   ```
+
+3. **Assert using Page Object elements**
+   ```typescript
+   // Use page object elements in assertions
+   await expect(assessmentPage.element1).toBeVisible();
+   await expect(assessmentPage.element2).toHaveText('Expected text');
+   ```
 
 ## Waiting Strategies
 

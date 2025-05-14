@@ -1,6 +1,6 @@
 import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "../../../base-page.js";
-import { TopNavbarComponent } from "../top-navbar.component.js";
+import { TopNavbarComponent } from "../top-navbar-page.js";
 
 /**
  * Page object for the Invited Candidates page

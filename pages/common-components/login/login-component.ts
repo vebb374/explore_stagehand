@@ -7,10 +7,10 @@ import { BasePage } from "pages/base-page.js";
  * Contains selectors and methods specific to the login page
  */
 export class LoginPage extends BasePage {
-  // Declare locators but don't initialize them yet
-  private readonly emailInput: Locator;
-  private readonly passwordInput: Locator;
-  private readonly loginButton: Locator;
+ 
+   readonly emailInput: Locator;
+   readonly passwordInput: Locator;
+   readonly loginButton: Locator;
 
   /**
    * Constructor

@@ -79,8 +79,8 @@ import { LoginPage } from '../../pages/common-components/login/login-page';
 
 Available path aliases:
 - `pages/*` - For page objects and components
-- `tests/*` - For test files and fixtures
-- `utils/*` - For utility functions
+- `tests/*` - For test files 
+- `utils/*` - For utility functions 
 - `utils` - Shorthand for utils/index
 
 ## Package Management with pnpm

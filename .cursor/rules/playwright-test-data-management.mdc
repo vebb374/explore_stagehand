@@ -24,7 +24,7 @@ Use fixtures to generate or retrieve unique credentials, especially for candidat
 
 ```typescript
 // tests/candidate/login.spec.ts
-import { test, expect } from '../fixtures.js';
+import { test, expect } from 'utils/fixtures.js';
 import { loginAsCandidate } from 'pages/common-components/login/login-page.js';
 
 test.describe('Candidate Login', () => {
@@ -34,8 +34,6 @@ test.describe('Candidate Login', () => {
     // Navigate to login page and login with unique candidate credentials
     await loginAsCandidate(page, email, password);
     
-    // Verify login is successful
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 });
 ```
@@ -67,23 +65,70 @@ Keep test data organized in appropriate directories:
 ```
 test-data/
   ├── candidates/           # Candidate test data
-  ├── companies/            # Company/recruiter test data
-  └── fixtures/             # Common test fixtures
+  │   └── infy_pref_test_users_40K/  # Bulk test user data
+  └── companies/            # Company/recruiter test data
 ```
 
 ## Dynamic Data Generation
 
-When needed, create helper functions for generating dynamic test data:
+We use the `test-data-generator.ts` utility to create dynamic test data that ensures test independence.
+
+### About test-data-generator.ts
+
+The test data generator utility located at `utils/test-data-generator.ts` provides functions for generating random, unique test data for tests:
 
 ```typescript
 // utils/test-data-generator.ts
-export function generateUniqueEmail(): string {
+export function generateRandomEmail(): string {
   return `test-${Date.now()}@example.com`;
 }
 
-export function generateAssessmentName(): string {
+export function generateRandomAssessmentName(): string {
   return `Test Assessment ${Date.now()}`;
 }
 ```
 
-> **Note**: For information about project architecture, TypeScript configuration, import paths, and pnpm usage, see the [Playwright Project Architecture](mdc:AuQA/playwright-project-architecture.mdc) rule.
+### Usage Examples
+
+Import and use these functions in your tests to create unique test data:
+
+```typescript
+// Example test using dynamic data generation
+import { test, expect } from '@playwright/test';
+import { AssessmentCreationPage } from 'pages/recruiter/assessment/assessment-creation-page';
+import { generateRandomEmail, generateRandomAssessmentName } from 'utils/test-data-generator';
+
+test.describe('Assessment Creation', () => {
+  test('should create a new assessment with unique name', async ({ page }) => {
+    const assessmentPage = new AssessmentCreationPage(page);
+    const uniqueEmail = generateRandomEmail();
+    const uniqueAssessmentName = generateRandomAssessmentName();
+    
+    await assessmentPage.navigateTo();
+    await assessmentPage.fillAssessmentDetails({
+      name: uniqueAssessmentName,
+      adminEmail: uniqueEmail
+    });
+    await assessmentPage.submitForm();
+    
+    await expect(assessmentPage.successMessage).toBeVisible();
+  });
+});
+```
+
+### Best Practices for Dynamic Data Generation
+
+1. **Always use the utility functions** rather than creating inline random values
+2. **Use descriptive prefixes** in generated data to make test debugging easier
+3. **Consider adding more specialized generators** as project needs grow
+4. **Ensure timestamp uniqueness** by adding minimal delays when creating multiple records
+
+For adding new generator functions, follow this pattern:
+
+```typescript
+// New generator function example
+export function generateRandomCompanyName(): string {
+  return `Test Company ${Date.now()}`;
+}
+```
+

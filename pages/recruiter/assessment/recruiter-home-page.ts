@@ -1,6 +1,6 @@
 import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "pages/base-page.js";
-import { TopNavbarComponent } from "./top-navbar.component.js";
+import { TopNavbarComponent } from "./top-navbar-page.js";
 
 export class AssessmentDashboardPage extends BasePage {
   readonly topNav: TopNavbarComponent;

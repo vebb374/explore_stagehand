@@ -1,7 +1,7 @@
 import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "../../../base-page.js";
-import { TopNavbarComponent } from "../top-navbar.component.js";
-import { InviteCandidatesModalComponent } from "../components/invite-candidates-modal.component.js";
+import { TopNavbarComponent } from "../top-navbar-page.js";
+import { InviteCandidatesModal } from "../components/invite/invite-candidates-modal.js";
 
 /**
  * Page object for the Assessment Overview page
@@ -24,6 +24,13 @@ export class AssessmentOverviewPage extends BasePage {
   private readonly shortlistedTab: Locator;
   private readonly archivedTab: Locator;
   private readonly invitedTab: Locator;
+
+  // Page elements
+  readonly assessmentMetrics: Locator;
+  readonly candidateStatusTabs: Locator;
+  readonly invitedCandidatesTab: Locator;
+  readonly candidatesTable: Locator;
+  readonly successToast: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -48,6 +55,13 @@ export class AssessmentOverviewPage extends BasePage {
     this.shortlistedTab = page.getByRole("link", { name: /Shortlisted/i });
     this.archivedTab = page.getByRole("link", { name: /Archived/i });
     this.invitedTab = page.getByRole("link", { name: /Invited/i });
+
+    // Page elements
+    this.assessmentMetrics = page.locator('div.grid').filter({ hasText: /Total candidates/ });
+    this.candidateStatusTabs = page.locator('div[role="tablist"]');
+    this.invitedCandidatesTab = page.getByRole('tab', { name: /Invited/ });
+    this.candidatesTable = page.locator('table');
+    this.successToast = page.locator('div[role="status"]');
   }
 
   /**
@@ -70,10 +84,10 @@ export class AssessmentOverviewPage extends BasePage {
    * Click the Invite Candidates button and return the modal component
    * @returns The invite candidates modal component
    */
-  async clickInviteCandidates(): Promise<InviteCandidatesModalComponent> {
+  async clickInviteCandidates(): Promise<InviteCandidatesModal> {
     await this.inviteCandidatesButton.click();
-    const inviteModal = new InviteCandidatesModalComponent(this.page);
-    await inviteModal.waitForModal();
+    const inviteModal = new InviteCandidatesModal(this.page);
+    await inviteModal.modalTitle.waitFor({ state: 'visible' });
     return inviteModal;
   }
 
@@ -105,5 +119,74 @@ export class AssessmentOverviewPage extends BasePage {
    */
   async goBack() {
     await this.backButton.click();
+  }
+
+  /**
+   * Opens the invite candidates modal
+   */
+  async openInviteCandidatesModal(): Promise<InviteCandidatesModal> {
+    await this.inviteCandidatesButton.click();
+    const inviteCandidatesModal = new InviteCandidatesModal(this.page);
+    // Wait for the modal to be visible
+    await inviteCandidatesModal.modalTitle.waitFor({ state: 'visible' });
+    return inviteCandidatesModal;
+  }
+
+  /**
+   * Switches to the invited candidates tab
+   */
+  async switchToInvitedCandidatesTab() {
+    await this.invitedCandidatesTab.click();
+  }
+
+  /**
+   * Gets the count of invited candidates from the tab
+   */
+  async getInvitedCandidatesCount(): Promise<number> {
+    const tabText = await this.invitedCandidatesTab.textContent();
+    const match = tabText?.match(/\((\d+)\)/);
+    return match ? parseInt(match[1]) : 0;
+  }
+
+  /**
+   * Checks if a candidate exists in the candidates table
+   */
+  async checkCandidateExists(email: string): Promise<boolean> {
+    const tableRows = this.candidatesTable.locator('tbody tr');
+    const count = await tableRows.count();
+    
+    for (let i = 0; i < count; i++) {
+      const rowText = await tableRows.nth(i).textContent();
+      if (rowText && rowText.includes(email)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Gets the invitation status of a candidate
+   */
+  async getCandidateInvitationStatus(email: string): Promise<string | null> {
+    const tableRows = this.candidatesTable.locator('tbody tr');
+    const count = await tableRows.count();
+    
+    for (let i = 0; i < count; i++) {
+      const rowText = await tableRows.nth(i).textContent();
+      if (rowText && rowText.includes(email)) {
+        const statusCell = tableRows.nth(i).locator('td').nth(5);
+        return await statusCell.textContent();
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Wait for success toast to appear
+   */
+  async waitForSuccessToast() {
+    await this.successToast.waitFor({ state: 'visible' });
   }
 }
