@@ -1,10 +1,13 @@
 import { Locator, Page } from "@playwright/test";
+import { BasePage, step } from "pages/base-page.js";
+import { RecruiterCommonComponents } from "pages/recruiter/common/recruiter-common-components.js";
 
 /**
  * Page object for the Invite Candidates modal
  */
-export class InviteCandidatesModal {
-  private page: Page;
+export class InviteCandidatesModal extends BasePage {
+  //Components
+  readonly recruierCommonComponents: RecruiterCommonComponents;
   
   // Modal elements
   readonly modalTitle: Locator;
@@ -20,20 +23,21 @@ export class InviteCandidatesModal {
   readonly closeModalButton: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
+    this.recruierCommonComponents = new RecruiterCommonComponents(page);
     
     // Initialize locators
     this.modalTitle = page.locator("text=Invite candidates");
-    this.emailInput = page.getByRole("textbox").filter({ hasText: /olivia@gmail.com/ });
-    this.firstNameInput = page.getByRole("textbox").filter({ hasText: /Olivia/ });
-    this.lastNameInput = page.getByRole("textbox").filter({ hasText: /Sam/ });
+    this.emailInput = page.getByRole("textbox", { name: "olivia@gmail.com" });
+    this.firstNameInput = page.getByRole("textbox", { name: "Olivia", exact: true });
+    this.lastNameInput = page.getByRole("textbox", { name: "Sam" });
     this.tagsDropdown = page.locator("text=Select...");
     this.addCandidateButton = page.getByRole("button", { name: "Add candidate" });
     this.candidatesTable = page.locator("table").filter({ hasText: /Email/ });
     this.bulkUploadButton = page.getByRole("button", { name: "upload multiple candidate details" });
     this.inviteCandidatesButton = page.getByRole("button", { name: "Invite candidates", exact: true });
     this.inviteExpirationInput = page.getByRole("textbox").filter({ hasText: /DD\/MM\/YY/ });
-    this.closeModalButton = page.getByRole("button", { name: "l" });
+    this.closeModalButton = page.locator("//div[contains(@class,'ql-flyout-main')]/button[@class='close-btn']");
   }
 
   /**
@@ -86,7 +90,9 @@ export class InviteCandidatesModal {
   /**
    * Closes the modal
    */
+  @step()
   async closeModal() {
+    await this.recruierCommonComponents.closeYellowAlert();
     await this.closeModalButton.click();
   }
 } 

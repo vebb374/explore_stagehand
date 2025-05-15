@@ -1,6 +1,6 @@
 {
     "mcpServers": {
-        "playwright-microsoft": {
+        "playwright": {
             "command": "npx",
             "args": [
                 "@playwright/mcp@latest"

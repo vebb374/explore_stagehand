@@ -11,7 +11,8 @@ type CustomFixtures = {
  */
 export const test = base.extend<CustomFixtures>({
   // Define candidateCredentials fixture
-  getUniqueCandidateCredentials: async (_, use, testInfo) => {
+  // eslint-disable-next-line no-empty-pattern
+  getUniqueCandidateCredentials: async ({}, use, testInfo) => {
     // Get unique credentials based on test title
     const credentials = getCandidateCredentials(testInfo.title);
     console.log(`Using candidate email: ${credentials.email} for test: ${testInfo.title}`);

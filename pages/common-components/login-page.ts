@@ -1,5 +1,5 @@
 import { Locator, Page } from "@playwright/test";
-import { BasePage } from "pages/base-page.js";
+import { BasePage ,step } from "pages/base-page.js";
 
 /**
  * HackerEarth Login Page object
@@ -30,7 +30,7 @@ export class LoginPage extends BasePage {
    * Wait for login form to be visible
    * @param timeout - Time to wait in milliseconds
    */
-  async waitForLoginForm(timeout = 10000) {
+  async  waitForLoginForm(timeout = 10000) {
     await this.emailInput.waitFor({
       state: "attached",
       timeout,
@@ -69,11 +69,31 @@ export class LoginPage extends BasePage {
    * @param email - Email address
    * @param password - Password
    */
+
   async login(email: string, password: string) {
     await this.waitForLoginForm();
     await this.enterEmail(email);
     await this.enterPassword(password);
     await this.clickLoginButton();
+  }
+
+  @step("Login as Recruiter")
+  async loginAsRecruiter(
+    email: string,
+    password: string
+  ) {
+    await this.page.goto("/recruiters/login", { waitUntil: "domcontentloaded" });
+    await this.login(email, password);
+  }
+
+  @step("Login as Candidate")
+  async loginAsCandidate(
+
+    email: string,
+    password: string
+  ) {
+    await this.page.goto("/login", { waitUntil: "domcontentloaded" });
+    await this.login(email, password);
   }
 }
 

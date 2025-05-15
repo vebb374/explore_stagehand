@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "postinstall": "playwright install",
+    "pretest": "tsc --noEmit && eslint --ext .ts",
     "test": "playwright test",
+    "ui": "playwright test --ui",
     "test:prod": "ENVIRONMENT=production playwright test",
     "test:preprod": "ENVIRONMENT=preprod playwright test"
   },
@@ -19,6 +21,7 @@
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
     "eslint": "^9.26.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-playwright": "^2.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.0.0"

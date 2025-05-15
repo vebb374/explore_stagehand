@@ -2,9 +2,9 @@ import { Locator, Page } from "@playwright/test";
 import { BasePage } from "pages/base-page.js";
 
 export class TopNavbarComponent extends BasePage {
-  private readonly assessmentsLink: Locator;
-  private readonly homeLink: Locator;
-  private readonly interviewsLink: Locator;
+  readonly assessmentsLink: Locator;
+  readonly homeLink: Locator;
+  readonly interviewsLink: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -31,7 +31,4 @@ export class TopNavbarComponent extends BasePage {
     await this.interviewsLink.click();
   }
 
-  async isAssessmentsLinkVisible(): Promise<boolean> {
-    return this.assessmentsLink.isVisible();
-  }
 }

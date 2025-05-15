@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
+import { LoginPage } from "pages/common-components/login-page.js";
 import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar-page.js";
 import { getCompanyData } from "utils/index.js";
 
@@ -8,8 +8,9 @@ test.describe("Recruiter Login", () => {
     page, 
   }) => {
     const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
-    await loginAsRecruiter(page, ADMIN, PASSWORD);
+    const loginPage = new LoginPage(page);
     const topNavbar = new TopNavbarComponent(page);
-    await expect(topNavbar.isAssessmentsLinkVisible()).resolves.toBe(true);
+    await loginPage.loginAsRecruiter(ADMIN, PASSWORD);
+    await expect(topNavbar.assessmentsLink).toBeVisible();
   });
 });

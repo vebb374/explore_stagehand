@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/assessment-overview-page.js";
-import { InviteCandidatesModal } from "pages/recruiter/assessment/components/invite-candidates-modal.ts";
-import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
-import { getCompanyData } from "utils/index.js";
 
+import { RecruierHomePage } from "pages/recruiter/assessment/recruiter-home-page.js";
+import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar-page.js";
+import { getCompanyData } from "utils/index.js";
+import { LoginPage } from "pages/common-components/login-page.js";
 test.describe("@functional Assessment Candidate Invitation Flow", () => {
   // Use unique email for each test to avoid conflicts
   const generateUniqueEmail = () => {
@@ -13,16 +14,16 @@ test.describe("@functional Assessment Candidate Invitation Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Get test company credentials
     const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
-    
+    const loginPage = new LoginPage(page);
     // Login as recruiter
-    await loginAsRecruiter(page, ADMIN, PASSWORD);
+    await loginPage.loginAsRecruiter(ADMIN, PASSWORD);
+    const topNavbar = new TopNavbarComponent(page);
+    const recruiterHomePage = new RecruierHomePage(page);
+
+    await topNavbar.navigateToAssessments();
+    await recruiterHomePage.clickFirstVisibleTestCard();
     
-    // Navigate to assessments page
-    await page.getByRole("link", { name: "Assessments", exact: true }).click();
-    
-    // Click on the first test card (replace with your actual selector or search for specific test)
-    await page.getByText("[he-qa] SQL TEST").first().click();
-    
+
     // Create and initialize the AssessmentOverviewPage object
     const assessmentOverviewPage = new AssessmentOverviewPage(page);
     await assessmentOverviewPage.waitForPageLoad();
@@ -43,6 +44,7 @@ test.describe("@functional Assessment Candidate Invitation Flow", () => {
     
     // Clean up
     await inviteModal.closeModal();
+    await expect(inviteModal.inviteCandidatesButton).toBeVisible();
   });
 
   test("should validate email is required when adding a candidate", async ({ page }) => {

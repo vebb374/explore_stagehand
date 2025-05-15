@@ -2,13 +2,13 @@ import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "pages/base-page.js";
 import { TopNavbarComponent } from "./top-navbar-page.js";
 
-export class AssessmentDashboardPage extends BasePage {
+export class RecruierHomePage extends BasePage {
   readonly topNav: TopNavbarComponent;
-  private readonly createNewTestButton: Locator;
-  private readonly testCard: Locator;
+  readonly createNewTestButton: Locator;
+  readonly testCard: Locator;
 
   constructor(page: Page) {
-    super(page);
+    super(page); 
 
     this.topNav = new TopNavbarComponent(page);
     this.createNewTestButton = page.getByRole("button", {

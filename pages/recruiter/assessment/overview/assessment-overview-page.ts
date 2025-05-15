@@ -129,6 +129,7 @@ export class AssessmentOverviewPage extends BasePage {
     const inviteCandidatesModal = new InviteCandidatesModal(this.page);
     // Wait for the modal to be visible
     await inviteCandidatesModal.modalTitle.waitFor({ state: "visible" });
+    await this.page.waitForLoadState("load");
     return inviteCandidatesModal;
   }
 
