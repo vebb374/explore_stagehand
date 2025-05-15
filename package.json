@@ -1,5 +1,5 @@
 {
-  "name": "AUQA",
+  "name": "auqa",
   "description": "QA tests for Hackerearth.",
   "type": "module",
   "scripts": {

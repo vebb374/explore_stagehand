@@ -11,19 +11,19 @@ export class AssessmentOverviewPage extends BasePage {
   readonly topNav: TopNavbarComponent;
 
   // Page navigation elements
-  private readonly backButton: Locator;
-  private readonly testTitle: Locator;
-  private readonly testLinkButton: Locator;
-  private readonly previewButton: Locator;
-  private readonly inviteCandidatesButton: Locator;
-  private readonly moreActionsButton: Locator;
+  readonly backButton: Locator;
+  readonly testTitle: Locator;
+  readonly testLinkButton: Locator;
+  readonly previewButton: Locator;
+  readonly inviteCandidatesButton: Locator;
+  readonly moreActionsButton: Locator;
 
   // Tabs
-  private readonly testTakenTab: Locator;
-  private readonly reviewPendingTab: Locator;
-  private readonly shortlistedTab: Locator;
-  private readonly archivedTab: Locator;
-  private readonly invitedTab: Locator;
+  readonly testTakenTab: Locator;
+  readonly reviewPendingTab: Locator;
+  readonly shortlistedTab: Locator;
+  readonly archivedTab: Locator;
+  readonly invitedTab: Locator;
 
   // Page elements
   readonly assessmentMetrics: Locator;
