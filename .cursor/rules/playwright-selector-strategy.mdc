@@ -21,22 +21,52 @@ When selecting elements in your Playwright tests, prefer selectors that query fo
 ## Good Practices
 
 ```typescript
-// GOOD - Using semantic selectors
-const saveButton = page.getByRole('button', { name: 'Save' });
-const nameInput = page.getByLabel('Full Name');
-const emailField = page.getByPlaceholderText('Enter your email');
-const errorMessage = page.getByText('Invalid credentials');
-const profileImage = page.getByAltText('User profile');
+// GOOD - Using semantic selectors in page objects
+export class LoginPage {
+  readonly page: Page;
+  readonly saveButton: Locator;
+  readonly nameInput: Locator;
+  readonly emailField: Locator;
+  readonly errorMessage: Locator;
+  readonly profileImage: Locator;
+  
+  constructor(page: Page) {
+    this.page = page;
+    this.saveButton = page.getByRole('button', { name: 'Save' });
+    this.nameInput = page.getByLabel('Full Name');
+    this.emailField = page.getByPlaceholderText('Enter your email');
+    this.errorMessage = page.getByText('Invalid credentials');
+    this.profileImage = page.getByAltText('User profile');
+  }
+}
+
+// In tests - access through fixtures
+test('should submit form', async ({ loginPage }) => {
+  await loginPage.nameInput.fill('John Doe');
+  await loginPage.emailField.fill('john@example.com');
+  await loginPage.saveButton.click();
+});
 ```
 
 ## Bad Practices to Avoid
 
 ```typescript
 // BAD - Using CSS selectors tied to implementation
-const saveButton = page.locator('.btn-primary');
-const nameInput = page.locator('input#name_field');
-const errorMessage = page.locator('.error-container > p');
-const profileImage = page.locator('.profile-section img');
+export class LoginPage {
+  readonly page: Page;
+  readonly saveButton: Locator;
+  readonly nameInput: Locator;
+  readonly errorMessage: Locator;
+  readonly profileImage: Locator;
+  
+  constructor(page: Page) {
+    this.page = page;
+    this.saveButton = page.locator('.btn-primary');
+    this.nameInput = page.locator('input#name_field');
+    this.errorMessage = page.locator('.error-container > p');
+    this.profileImage = page.locator('.profile-section img');
+  }
+}
 ```
 
 ## When to Use Test IDs
@@ -45,7 +75,13 @@ Only use test IDs as a last resort, when elements cannot be selected using more 
 
 ```typescript
 // Only when necessary - Using data-testid
-const specialWrapper = page.getByTestId('question-container');
+export class SpecialComponent {
+  readonly container: Locator;
+  
+  constructor(page: Page) {
+    this.container = page.getByTestId('special-container');
+  }
+}
 ```
 
 ## Locating Elements Within Components
@@ -55,6 +91,8 @@ When working with components, define all locators relative to the component's co
 ```typescript
 export class QuestionTableComponent {
   readonly container: Locator;
+  readonly questionTypeHeader: Locator;
+  readonly difficultyLevelCell: Locator;
   
   constructor(page: Page) {
     this.container = page.locator('[data-testid="question-table"]');

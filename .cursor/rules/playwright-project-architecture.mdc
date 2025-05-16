@@ -22,17 +22,60 @@ AuQA/
   │       └── interview/   # Interview-related pages
   ├── tests/               # Test files
   │   ├── candidate/       # Candidate-specific tests
+  │   │   └── fixtures.ts  # Candidate fixtures
   │   └── recruiter/       # Recruiter-specific tests
   │       ├── assessment/  # Assessment-related tests
+  │       │   └── fixtures.ts  # Assessment fixtures
   │       ├── interview/   # Interview-related tests
+  │       │   └── fixtures.ts  # Interview fixtures
   │       └── login/       # Login-related tests
+  │           └── fixtures.ts  # Login fixtures
   ├── test-data/           # Test data files
   │   ├── candidates/      # Candidate test data
   │   └── companies/       # Company test data
   ├── utils/               # Utility functions
+  │   └── base-fixtures.ts # Base fixtures for extension
   ├── .env                 # Environment variables
   ├── playwright.config.ts # Playwright configuration
   └── tsconfig.json        # TypeScript configuration
+```
+
+## Fixture Structure
+
+Each test group has its own `fixtures.ts` file that extends the base fixtures:
+
+```typescript
+// tests/recruiter/assessment/fixtures.ts
+import { test as base } from "utils/base-fixtures.js";
+import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/AssessmentOverviewPage.js";
+
+type CustomFixtures = {
+  assessmentOverviewPage: AssessmentOverviewPage;
+};
+
+export const test = base.extend<CustomFixtures>({
+  assessmentOverviewPage: async ({ page }, use) => {
+    await use(new AssessmentOverviewPage(page));
+  }
+});
+
+export { expect } from "@playwright/test";
+```
+
+## Test Files
+
+Test files import fixtures from their local `fixtures.ts` file:
+
+```typescript
+// tests/recruiter/assessment/overview.spec.ts
+import { test, expect } from './fixtures';
+
+test.describe('Assessment Overview', () => {
+  test('should display details', async ({ assessmentOverviewPage }) => {
+    await assessmentOverviewPage.navigateTo('test-id');
+    // Test implementation
+  });
+});
 ```
 
 ## TypeScript Configuration

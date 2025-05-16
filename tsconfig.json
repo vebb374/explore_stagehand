@@ -23,7 +23,7 @@
         "utils/*"
       ],
       "utils": [
-        "utils/index"
+        "utils/index.js"
       ]
     }
   },

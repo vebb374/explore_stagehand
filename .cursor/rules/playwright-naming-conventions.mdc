@@ -21,6 +21,10 @@ Consistent naming conventions make our code more readable and maintainable. Foll
    - `assessment-overview.spec.ts`
    - `login-functionality.spec.ts`
 
+4. **Fixture Files**: Use `fixtures.ts` (lowercase) for each test group directory
+   - `tests/recruiter/assessment/fixtures.ts`
+   - `tests/candidate/onboarding/fixtures.ts`
+
 ## Variable & Function Naming
 
 1. **Variables**: Use camelCase
@@ -54,6 +58,14 @@ Consistent naming conventions make our code more readable and maintainable. Foll
    export class QuestionTableComponent { ... }
    ```
 
+6. **Fixture Names**: Use camelCase and descriptive names
+   ```typescript
+   // In fixtures.ts
+   loginPage: LoginPage;
+   assessmentOverviewPage: AssessmentOverviewPage;
+   getUniqueCandidateCredentials: { email: string; password: string };
+   ```
+
 ## Test Naming
 
 Tests should be named to clearly indicate what they're verifying:
@@ -63,40 +75,19 @@ test('should display error message with invalid credentials', async () => { ... 
 test('should navigate to dashboard after successful login', async () => { ... });
 ```
 
-## Example with Proper Naming
 
-```typescript
-// pages/recruiter/assessment/overview/AssessmentOverviewPage.ts
-import { Locator, Page } from '@playwright/test';
-import { SettingsComponent } from './components/SettingsComponent';
 
-export class AssessmentOverviewPage {
-  readonly page: Page;
-  readonly pageTitle: Locator;
-  readonly settingsComponent: SettingsComponent;
-  readonly inviteCandidatesButton: Locator;
-  
-  constructor(page: Page) {
-    this.page = page;
-    this.pageTitle = page.getByRole('heading', { name: 'Overview' });
-    this.settingsComponent = new SettingsComponent(page);
-    this.inviteCandidatesButton = page.getByRole('button', { name: 'Invite candidates' });
-  }
-  
-  async navigateTo(assessmentId: string): Promise<void> {
-    await this.page.goto(`/assessment/${assessmentId}/overview`);
-  }
-  
-  async inviteCandidates(): Promise<void> {
-    await this.inviteCandidatesButton.click();
-  }
-}
+1. **Named exports**: Use the exact name
+   ```typescript
+   import { LoginPage } from 'pages/common-components/login/LoginPage';
+   ```
 
-// tests/recruiter/assessment/overview.spec.ts
-test('should display settings section on assessment overview page', async ({ page }) => {
-  const assessmentPage = new AssessmentOverviewPage(page);
-  await assessmentPage.navigateTo('test-id');
-  
-  await expect(assessmentPage.settingsComponent.container).toBeVisible();
-});
-```
+2. **Default exports**: Use the same name as the exported class/function
+   ```typescript
+   import AssessmentPage from 'pages/recruiter/assessment/AssessmentPage';
+   ```
+
+3. **Path aliases**: Use the defined aliases in tsconfig.json
+   ```typescript
+   import { LoginPage } from 'pages/common-components/login/LoginPage';  // using alias
+   ```

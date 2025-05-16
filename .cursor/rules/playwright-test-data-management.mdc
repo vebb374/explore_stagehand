@@ -1,6 +1,6 @@
 ---
 description: 
-globs: tests/**/*.ts
+globs: tests/**/*.ts,test-data/**
 alwaysApply: false
 ---
 # Playwright Test Data Management
@@ -13,48 +13,79 @@ Each test should properly handle test data to ensure isolation and maintainabili
 2. **Data Creation**: Tests should create or fetch their own test data
 3. **Cleanup**: Tests should clean up any data they create
 4. **No Shared State**: Don't rely on data created by other tests
+5. **Import Data Utilities**: Import test data utilities directly in tests
 
-## Credential Management
+## Fixture-Based Test Data Management
 
-We use two main approaches for handling test credentials:
+Only fundamental test data should be managed through fixtures to ensure a standard approach and proper isolation.
 
-### 1. Fixtures for Dynamic Credentials
+### Base Fixtures for Authentication Data
 
-Use fixtures to generate or retrieve unique credentials, especially for candidate tests:
+The `base-fixtures.ts` file provides foundational fixtures like candidate credentials:
 
 ```typescript
-// tests/candidate/login.spec.ts
-import { test, expect } from 'utils/fixtures.js';
-import { loginAsCandidate } from 'pages/common-components/login/login-page.js';
+// utils/base-fixtures.ts
+import { test as base } from "@playwright/test";
+import { getCandidateCredentials } from "utils";
 
-test.describe('Candidate Login', () => {
-  test('should login as candidate with unique credentials', async ({ page, getUniqueCandidateCredentials }) => {
-    const { email, password } = getUniqueCandidateCredentials;
+type CustomFixtures = {
+  getUniqueCandidateCredentials: { email: string; password: string };
+};
+
+export const test = base.extend<CustomFixtures>({
+    getUniqueCandidateCredentials: async ({}, use, testInfo) => {
+        const credentials = getCandidateCredentials(testInfo.title);
+        console.log(`Using candidate email: ${credentials.email} for test: ${testInfo.title}`);
     
-    // Navigate to login page and login with unique candidate credentials
-    await loginAsCandidate(page, email, password);
+        await use(credentials);
+    }
+});
+```
+
+## Utility-Based Test Data
+
+Import utility functions directly in tests for most test data needs:
+
+```typescript
+// tests/recruiter/login/login.spec.ts
+import { test, expect } from './fixtures';
+import { getCompanyData } from "utils";
+
+test.describe("Recruiter Login", () => {
+  test("should login successfully", async ({ loginPage, topNavbar }) => {
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
     
+    await loginPage.navigateTo();
+    await loginPage.login(ADMIN, PASSWORD);
+    
+    await expect(topNavbar.assessmentsLink).toBeVisible();
   });
 });
 ```
 
-### 2. Utility Functions for Known Test Data
+## Dynamic Data Generation
 
-For recruiter/admin tests, use utility functions to access known test data:
+Import data generators directly from utils:
 
 ```typescript
-// tests/recruiter/login/test_login.spec.ts
-import { test, expect } from "@playwright/test";
-import { loginAsRecruiter } from "pages/common-components/login/login-page.js";
-import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar.component.js";
-import { getCompanyData } from "utils/index.js";
+// tests/recruiter/assessment/create.spec.ts
+import { test, expect } from './fixtures';
+import { 
+  generateRandomEmail, 
+  generateRandomAssessmentName 
+} from "utils";
 
-test.describe("Recruiter Login", () => {
-  test("should login successfully and see assessments link", async ({ page }) => {
-    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
-    await loginAsRecruiter(page, ADMIN, PASSWORD);
-    // Test assertions...
+test("should create a new assessment", async ({ assessmentPage }) => {
+  const uniqueEmail = generateRandomEmail();
+  const assessmentName = generateRandomAssessmentName();
+  
+  await assessmentPage.navigateTo();
+  await assessmentPage.fillAssessmentDetails({
+    name: assessmentName,
+    adminEmail: uniqueEmail
   });
+  
+  await expect(assessmentPage.successMessage).toBeVisible();
 });
 ```
 
@@ -67,68 +98,5 @@ test-data/
   ├── candidates/           # Candidate test data
   │   └── infy_pref_test_users_40K/  # Bulk test user data
   └── companies/            # Company/recruiter test data
-```
-
-## Dynamic Data Generation
-
-We use the `test-data-generator.ts` utility to create dynamic test data that ensures test independence.
-
-### About test-data-generator.ts
-
-The test data generator utility located at `utils/test-data-generator.ts` provides functions for generating random, unique test data for tests:
-
-```typescript
-// utils/test-data-generator.ts
-export function generateRandomEmail(): string {
-  return `test-${Date.now()}@example.com`;
-}
-
-export function generateRandomAssessmentName(): string {
-  return `Test Assessment ${Date.now()}`;
-}
-```
-
-### Usage Examples
-
-Import and use these functions in your tests to create unique test data:
-
-```typescript
-// Example test using dynamic data generation
-import { test, expect } from '@playwright/test';
-import { AssessmentCreationPage } from 'pages/recruiter/assessment/assessment-creation-page';
-import { generateRandomEmail, generateRandomAssessmentName } from 'utils/test-data-generator';
-
-test.describe('Assessment Creation', () => {
-  test('should create a new assessment with unique name', async ({ page }) => {
-    const assessmentPage = new AssessmentCreationPage(page);
-    const uniqueEmail = generateRandomEmail();
-    const uniqueAssessmentName = generateRandomAssessmentName();
-    
-    await assessmentPage.navigateTo();
-    await assessmentPage.fillAssessmentDetails({
-      name: uniqueAssessmentName,
-      adminEmail: uniqueEmail
-    });
-    await assessmentPage.submitForm();
-    
-    await expect(assessmentPage.successMessage).toBeVisible();
-  });
-});
-```
-
-### Best Practices for Dynamic Data Generation
-
-1. **Always use the utility functions** rather than creating inline random values
-2. **Use descriptive prefixes** in generated data to make test debugging easier
-3. **Consider adding more specialized generators** as project needs grow
-4. **Ensure timestamp uniqueness** by adding minimal delays when creating multiple records
-
-For adding new generator functions, follow this pattern:
-
-```typescript
-// New generator function example
-export function generateRandomCompanyName(): string {
-  return `Test Company ${Date.now()}`;
-}
 ```
 

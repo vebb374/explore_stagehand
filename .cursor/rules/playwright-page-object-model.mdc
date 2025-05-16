@@ -13,6 +13,7 @@ Each page in our application should have a corresponding Page Object Model (POM)
 2. No selectors should be in test files
 3. All assertions should be in test files, not in POM files
 4. **Always declare locators as readonly** since they will be used for assertions in tests
+5. **Access page objects through fixtures** in test files
 
 ## Locator Best Practices
 
@@ -33,11 +34,54 @@ Each page in our application should have a corresponding Page Object Model (POM)
    await expect(loginPage.welcomeText).toHaveText('Welcome back!');
    ```
 
-## Structure
+## Fixture Structure
 
-- Tests should be in the `tests/` directory
+- Each test group should have a dedicated `fixtures.ts` file
+- The fixtures file extends the base fixtures with page objects
+- Test files import and use these fixtures
+
+## Example Fixture
+
+```typescript
+// tests/recruiter/assessment/fixtures.ts
+import { test as base } from "utils/base-fixtures.js";
+import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/AssessmentOverviewPage.js";
+import { QuestionsOverviewComponent } from "pages/recruiter/assessment/overview/components/QuestionsOverviewComponent.js";
+
+type CustomFixtures = {
+  assessmentOverviewPage: AssessmentOverviewPage;
+};
+
+export const test = base.extend<CustomFixtures>({
+  assessmentOverviewPage: async ({ page }, use) => {
+    await use(new AssessmentOverviewPage(page));
+  }
+});
+
+export { expect } from "@playwright/test";
+```
+
+## Example Test Using Fixtures
+
+```typescript
+// tests/recruiter/assessment/overview.spec.ts
+import { test, expect } from './fixtures';
+
+test.describe('Assessment Overview', () => {
+  test('displays assessment overview', async ({ assessmentOverviewPage }) => {
+    await assessmentOverviewPage.navigateTo('test-assessment-id');
+    
+    await expect(assessmentOverviewPage.pageTitle).toBeVisible();
+    await expect(assessmentOverviewPage.questionsOverview.questionTypeRow).toBeVisible();
+  });
+});
+```
+
+## Project Structure
+
 - Page objects should be in the `pages/` directory
-- Components (parts of a page) should be in appropriate subdirectories
+- Fixtures should be in the corresponding `tests/` subdirectory
+- Components should be in appropriate subdirectories
 
 ## Example
 

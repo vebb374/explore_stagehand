@@ -5,7 +5,7 @@ import { RecruierHomePage } from "pages/recruiter/assessment/recruiter-home-page
 import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar-page.js";
 import { getCompanyData } from "utils/index.js";
 import { LoginPage } from "pages/common-components/login-page.js";
-import { generateRandomEmail } from "utils/index.js";
+import { generateRandomEmail } from "utils";
 
 test.describe("@functional Assessment Candidate Invitation Flow", () => {
 
