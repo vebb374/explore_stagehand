@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures.js";
 import { generateRandomEmail, getCompanyData } from "utils";
 
-test.describe("@functional Assessment Candidate Invitation Flow", () => {
+test.describe("Assessment Candidate Invitation Flow", () => {
     test.beforeEach(async ({ loginPage, topNavbar, recruiterHomePage, assessmentOverviewPage }) => {
         // Get test company credentials
         const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
@@ -14,150 +14,155 @@ test.describe("@functional Assessment Candidate Invitation Flow", () => {
     });
 
     test(
-        "should open invite candidates modal when clicking on invite button",
+        "should validate invite modal functionality and mandatory fields",
         {
-            tag: "@fast",
+            tag: "@smoke",
         },
         async ({ assessmentOverviewPage }) => {
-            // Act
+            // Arrange
             const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
+            await inviteModal.addSuccessSignInYellowAlertHandler();
 
-            // Assert
+            // Assert - verify modal elements are visible
             await expect(inviteModal.modalTitle).toBeVisible();
             await expect(inviteModal.emailInput).toBeVisible();
-            await expect(inviteModal.addCandidateButton).toBeVisible();
-            await expect(inviteModal.inviteCandidatesButton).toBeVisible();
+            await expect(inviteModal.addCandidateButton).toBeDisabled(); // Initially disabled with no email
+
+            // Act - check email validation
+            await inviteModal.emailInput.fill("");
+            // Assert - button should be disabled with empty email
+            await expect(inviteModal.addCandidateButton).toBeDisabled();
+
+            // Act - enter invalid email
+            await inviteModal.emailInput.fill("invalid-email");
+            await inviteModal.addCandidateButton.click();
+
+            // Assert - email validation error should be visible
+            const emailErrorVisible = await inviteModal.isEmailErrorVisible();
+            expect(emailErrorVisible).toBeTruthy();
 
             // Clean up
             await inviteModal.closeModal();
-            await expect(inviteModal.inviteCandidatesButton).toBeVisible();
         }
     );
 
-    test("should validate email is required when adding a candidate", async ({
-        page,
-        assessmentOverviewPage,
-    }) => {
-        // Arrange
-        const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-        await inviteModal.emailInput.fill("");
-        await expect(inviteModal.addCandidateButton).toBeDisabled();
+    test(
+        "should handle adding and removing candidates from the invite list",
+        {
+            tag: ["@functional", "@P2"],
+        },
+        async ({ assessmentOverviewPage }) => {
+            // Arrange
+            const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
+            await inviteModal.addSuccessSignInYellowAlertHandler();
+            const testEmail1 = generateRandomEmail();
+            const testEmail2 = generateRandomEmail();
+            const firstName = "Test";
+            const lastName = "Candidate";
 
-        // Assert
-        // Check for validation error message (adjust selector based on your UI)
-        const errorMessage = page.locator("text=Email is required");
-        await expect(errorMessage).toBeVisible();
+            // Act - add candidate with email only
+            await inviteModal.addCandidate(testEmail1);
 
-        // Clean up
-        await inviteModal.closeModal();
-    });
+            // Assert - candidate should be in the list
+            const candidateExists = await inviteModal.candidateExists(testEmail1);
+            expect(candidateExists).toBeTruthy();
 
-    test("@smoke should successfully invite a candidate with email only", async ({
-        assessmentOverviewPage,
-    }) => {
-        // Arrange
-        const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-        const testEmail = generateRandomEmail();
+            // Act - add candidate with all details
+            await inviteModal.addCandidate(testEmail2, firstName, lastName);
 
-        // Act
-        await inviteModal.addCandidate(testEmail);
-        await inviteModal.submitInvite();
+            // Assert - both candidates should be in the list
+            const candidate2Exists = await inviteModal.candidateExists(testEmail2);
+            expect(candidate2Exists).toBeTruthy();
 
-        // Assert
-        // Check for success message
-        await assessmentOverviewPage.waitForSuccessToast();
+            // Check remaining count message is correct
+            const countMessage = await inviteModal.getRemainingCandidatesMessage();
+            expect(countMessage.replace(/\s+/g, " ")).toBe("You can only add 3 more candidates");
 
-        // Navigate to invited tab and verify candidate appears
-        await assessmentOverviewPage.switchToInvitedCandidatesTab();
+            // Act - remove first candidate from the list
+            await inviteModal.removeCandidate(0);
 
-        // Verify the candidate exists in the table
-        const candidateExists = await assessmentOverviewPage.checkCandidateExists(testEmail);
-        expect(candidateExists).toBeTruthy();
+            // Assert - first candidate should not be in the list anymore
+            const candidate1ExistsAfterRemoval = await inviteModal.candidateExists(testEmail1);
+            expect(candidate1ExistsAfterRemoval).toBeFalsy();
 
-        // Verify invitation status
-        const status = await assessmentOverviewPage.getCandidateInvitationStatus(testEmail);
-        expect(status).toContain("Processed");
-    });
+            // Clean up
+            await inviteModal.closeModal();
+        }
+    );
 
-    test("should successfully invite a candidate with all details", async ({
-        page,
-        assessmentOverviewPage,
-    }) => {
-        // Arrange
+    test(
+        "should successfully invite candidates and update the invited tab count",
+        {
+            tag: ["@functional", "@P0"],
+        },
+        async ({ page, assessmentOverviewPage }) => {
+            // Arrange - Get initial count of invited candidates
+            await assessmentOverviewPage.navigateToInvitedTab();
+            const initialCount =
+                await assessmentOverviewPage.invitedCandidatesPage.getInvitedCandidatesCount();
 
-        const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-        const testEmail = generateRandomEmail();
-        const firstName = "Test";
-        const lastName = "Candidate";
+            // Open invite modal
+            const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
+            const testEmail = generateRandomEmail();
+            const firstName = "John";
+            const lastName = "Doe";
 
-        // Act
-        await inviteModal.addCandidate(testEmail, firstName, lastName);
-        await inviteModal.submitInvite();
+            // Act - add candidate with full details
+            await inviteModal.addCandidate(testEmail, firstName, lastName);
+            await inviteModal.clickDateInput();
 
-        // Assert
-        // Check for success message
-        await assessmentOverviewPage.waitForSuccessToast();
+            // Set expiration date using the datePicker utility
+            await inviteModal.datePicker.selectRelativeDate("tomorrow");
 
-        // Navigate to invited tab and verify candidate appears
-        await assessmentOverviewPage.switchToInvitedCandidatesTab();
+            // Submit invitation
+            await inviteModal.submitInvite();
 
-        // Verify the candidate exists in the table
-        const candidateExists = await assessmentOverviewPage.checkCandidateExists(testEmail);
-        expect(candidateExists).toBeTruthy();
+            // Assert - check for success message
+            await assessmentOverviewPage.recruiterCommonComponents.waitForSuccessToastWithText(
+                "1 candidate have been successfully invited"
+            );
 
-        // Verify candidate name appears in the table
-        const candidateTable = page.locator("table");
-        await expect(candidateTable).toContainText(firstName);
-        await expect(candidateTable).toContainText(lastName);
+            // Verify that invited count is updated
+            await assessmentOverviewPage.navigateToInvitedTab();
 
-        // Verify invitation status
-        const status = await assessmentOverviewPage.getCandidateInvitationStatus(testEmail);
-        expect(status).toContain("Processed");
-    });
+            // Refresh the page to ensure the invited candidates tab is updated
+            await page.reload();
+            await assessmentOverviewPage.invitedCandidatesPage.waitForPageLoad();
 
-    test("should show updated count in invited tab after invitation", async ({
-        assessmentOverviewPage,
-    }) => {
-        // Arrange
+            const updatedCount =
+                await assessmentOverviewPage.invitedCandidatesPage.getInvitedCandidatesCount();
+            expect(updatedCount).toBeGreaterThan(initialCount);
 
-        // Get initial count of invited candidates
-        await assessmentOverviewPage.switchToInvitedCandidatesTab();
-        const initialCount = await assessmentOverviewPage.getInvitedCandidatesCount();
+            // Verify the candidate exists in the table
+            const candidateExists =
+                await assessmentOverviewPage.invitedCandidatesPage.candidateExists(testEmail);
+            expect(candidateExists).toBeTruthy();
+        }
+    );
 
-        // Invite a new candidate
-        const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-        const testEmail = generateRandomEmail();
+    test(
+        "should enforce the 5 candidate limit for manual invitations",
+        {
+            tag: ["@functional", "@P2"],
+        },
+        async ({ assessmentOverviewPage }) => {
+            // Arrange
+            const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
+            await inviteModal.addSuccessSignInYellowAlertHandler();
 
-        // Act
-        await inviteModal.addCandidate(testEmail);
-        await inviteModal.submitInvite();
+            // Add 5 candidates
+            for (let i = 0; i < 5; i++) {
+                const testEmail = generateRandomEmail();
+                await inviteModal.addCandidate(testEmail);
+            }
 
-        // Wait for success message
-        await assessmentOverviewPage.waitForSuccessToast();
+            // Assert - check that we can't add more candidates (message should say "You can only add 0 more candidates")
+            const countMessage = await inviteModal.getRemainingCandidatesMessage();
+            expect(countMessage).toContain("You cannot add more candidates");
+            await expect(inviteModal.emailInput).toBeDisabled();
 
-        // Switch to invited tab
-        await assessmentOverviewPage.switchToInvitedCandidatesTab();
-
-        // Assert
-        const updatedCount = await assessmentOverviewPage.getInvitedCandidatesCount();
-        expect(updatedCount).toBeGreaterThan(initialCount);
-    });
-
-    test("should be able to close modal without inviting candidates", async ({
-        assessmentOverviewPage,
-    }) => {
-        // Arrange
-        const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-
-        // Act
-        await inviteModal.closeModal();
-
-        // Assert
-        await expect(inviteModal.modalTitle).toBeHidden();
-
-        // Verify we're still on the assessment overview page by checking if we can open the modal again
-        const reopenModal = await assessmentOverviewPage.openInviteCandidatesModal();
-        await expect(reopenModal.modalTitle).toBeVisible();
-        await reopenModal.closeModal();
-    });
+            // Clean up
+            await inviteModal.closeModal();
+        }
+    );
 });

@@ -1,0 +1,56 @@
+---
+description: when using playwright mcp server. to explore or generate test using mcp server
+globs: 
+alwaysApply: false
+---
+# Playwright Test Generation using MCP Server
+
+## 1. Your Role
+
+You are an AI assistant specialized in generating Playwright tests. Your primary goal is to create robust and reliable automated tests.
+
+## 2. Core Principle: Exploration First
+
+-   **DO NOT generate test code based on the scenario description alone.**
+-   **ALWAYS explore the target web page thoroughly before writing any test code.** This involves:
+    -   Taking page snapshots (`browser_snapshot`).
+    -   Identifying reliable locators for interactive elements.
+    -   Understanding the user flow and application behavior.
+   
+
+## 3. Test Generation Process
+
+1.  **Understand the Scenario**: Clearly identify the steps involved in the user scenario you need to automate.
+2.  **Interactive Exploration**:
+    -   If user does not provide a URL go to  `www.hackerearth.com`
+    -   Navigate to the relevant page (`mcp_playwright_browser_navigate`).
+    -   Use Playwright MCP tools to perform each action in the scenario step-by-step (e.g., `mcp_playwright_browser_click`, `mcp_playwright_browser_type`, `mcp_playwright_browser_select_option`).
+    -   After each interaction, take a snapshot (`mcp_playwright_browser_snapshot`) to verify the state and get updated element references.
+    -   Wait for elements or conditions as needed (`mcp_playwright_browser_wait_for`).
+3.  **Code Generation**:
+    -   Once all steps have been successfully executed and verified interactively, use the `mcp_playwright_browser_generate_playwright_test` tool to create the Playwright TypeScript test code.
+    -   Ensure the generated test includes necessary imports, fixtures (refer to `playwright-project-architecture` and `playwright-component-structure` rules), and follows naming conventions (refer to `playwright-naming-conventions` rule).
+
+## 4. Test Execution and Iteration
+
+1.  **Initial Run**:
+    -   Execute the generated test file. It's recommended to run each test case individually.
+    -   You can assign a temporary tag (e.g., `@inprogress`) to the test case or suite for focused execution:
+        ```bash
+        pnpm exec playwright test "path/to/the/test.spec.ts" --grep "@inprogress"
+        ```
+2.  **Handling Failures**:
+    -   **If a test fails, DO NOT attempt to fix the code directly without re-investigation.**
+    -   **Return to the exploration phase**:
+        -   Use the Playwright MCP server to re-trace the failing steps.
+        -   Take new snapshots (`mcp_playwright_browser_snapshot`) around the point of failure.
+        - Use screenshots (`browser_take_screenshot`) to get a better understanding if (`browser_snapshot`) is not working.
+        -   Identify if locators have changed, if there are timing issues, or if the application behavior is different than expected.
+        -   Obtain updated and more robust locators.
+    -   **Update the test code** based on your new findings from the exploration.
+3.  **Iterate**: Repeat the execution and debugging cycle until the test passes reliably.
+
+## 5. Important Considerations
+
+-   Adhere to the project's selector strategy (see `playwright-selector-strategy` rule).
+-   Structure Page Object Models (POMs) and components according to `component-composition` and `playwright-component-structure` rules.

@@ -14,6 +14,7 @@ Each page in our application should have a corresponding Page Object Model (POM)
 3. All assertions should be in test files, not in POM files
 4. **Always declare locators as readonly** since they will be used for assertions in tests
 5. **Access page objects through fixtures** in test files
+6. Before adding any new selectors/functions check if you can reuse existing selectors, functions
 
 ## Locator Best Practices
 

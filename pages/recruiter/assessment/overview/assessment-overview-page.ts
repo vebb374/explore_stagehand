@@ -2,13 +2,16 @@ import { Locator, Page, expect } from "@playwright/test";
 import { TopNavbarComponent } from "../top-navbar-page.js";
 import { InviteCandidatesModal } from "pages/recruiter/assessment/invite-component/invite-candidates-modal.js";
 import { BasePage } from "pages/base-page.js";
-
+import { RecruiterCommonComponents } from "pages/recruiter/common/recruiter-common-components.js";
+import { InvitedCandidatesPage } from "pages/recruiter/assessment/overview/invited-candidates-page.js";
 /**
  * Page object for the Assessment Overview page
  * This page is displayed after clicking on a specific assessment
  */
 export class AssessmentOverviewPage extends BasePage {
     readonly topNav: TopNavbarComponent;
+    readonly recruiterCommonComponents: RecruiterCommonComponents;
+    readonly invitedCandidatesPage: InvitedCandidatesPage;
 
     // Page navigation elements
     readonly backButton: Locator;
@@ -30,12 +33,13 @@ export class AssessmentOverviewPage extends BasePage {
     readonly candidateStatusTabs: Locator;
     readonly invitedCandidatesTab: Locator;
     readonly candidatesTable: Locator;
-    readonly successToast: Locator;
 
     constructor(page: Page) {
         super(page);
 
         this.topNav = new TopNavbarComponent(page);
+        this.recruiterCommonComponents = new RecruiterCommonComponents(page);
+        this.invitedCandidatesPage = new InvitedCandidatesPage(page);
 
         // Initialize locators
         this.backButton = page.getByRole("button", { name: /Back/i });
@@ -59,9 +63,8 @@ export class AssessmentOverviewPage extends BasePage {
         // Page elements
         this.assessmentMetrics = page.locator("div.grid").filter({ hasText: /Total candidates/ });
         this.candidateStatusTabs = page.locator('div[role="tablist"]');
-        this.invitedCandidatesTab = page.getByRole("tab", { name: /Invited/ });
+        this.invitedCandidatesTab = page.getByRole("link", { name: /Invited/ });
         this.candidatesTable = page.locator("table");
-        this.successToast = page.locator('div[role="status"]');
     }
 
     /**
@@ -96,8 +99,7 @@ export class AssessmentOverviewPage extends BasePage {
      */
     async navigateToInvitedTab() {
         await this.invitedTab.click();
-        // The URL should change to include /candidates-invited/ path
-        await expect(this.page).toHaveURL(/.*\/candidates-invited\/.*/);
+        await this.invitedCandidatesPage.waitForPageLoad();
     }
 
     /**
@@ -131,63 +133,5 @@ export class AssessmentOverviewPage extends BasePage {
         await inviteCandidatesModal.modalTitle.waitFor({ state: "visible" });
         await this.page.waitForLoadState("load");
         return inviteCandidatesModal;
-    }
-
-    /**
-     * Switches to the invited candidates tab
-     */
-    async switchToInvitedCandidatesTab() {
-        await this.invitedCandidatesTab.click();
-    }
-
-    /**
-     * Gets the count of invited candidates from the tab
-     */
-    async getInvitedCandidatesCount(): Promise<number> {
-        const tabText = await this.invitedCandidatesTab.textContent();
-        const match = tabText?.match(/\((\d+)\)/);
-        return match ? parseInt(match[1]) : 0;
-    }
-
-    /**
-     * Checks if a candidate exists in the candidates table
-     */
-    async checkCandidateExists(email: string): Promise<boolean> {
-        const tableRows = this.candidatesTable.locator("tbody tr");
-        const count = await tableRows.count();
-
-        for (let i = 0; i < count; i++) {
-            const rowText = await tableRows.nth(i).textContent();
-            if (rowText && rowText.includes(email)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Gets the invitation status of a candidate
-     */
-    async getCandidateInvitationStatus(email: string): Promise<string | null> {
-        const tableRows = this.candidatesTable.locator("tbody tr");
-        const count = await tableRows.count();
-
-        for (let i = 0; i < count; i++) {
-            const rowText = await tableRows.nth(i).textContent();
-            if (rowText && rowText.includes(email)) {
-                const statusCell = tableRows.nth(i).locator("td").nth(5);
-                return await statusCell.textContent();
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Wait for success toast to appear
-     */
-    async waitForSuccessToast() {
-        await this.successToast.waitFor({ state: "visible" });
     }
 }

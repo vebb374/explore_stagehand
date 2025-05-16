@@ -5,7 +5,56 @@ alwaysApply: false
 ---
 # Playwright Component Structure
 
-Pages should be broken down into logical components to improve maintainability and reusability. Components are parts of a page that can be tested independently.
+This rule provides guidance on how to structure components and pages in the AuQA Playwright test framework.
+Pages should be broken down into logical components to improve maintainability and reusability. 
+Components are parts of a page that can be tested independently.
+
+## Directory Structure
+
+The project follows a clear separation between page objects and test files:
+
+- `pages/` - Contains all page objects and UI components
+  - `candidate/` - Candidate-specific pages
+  - `common-components/` - Shared components used across different user types
+  - `recruiter/` - Recruiter-specific pages
+    - `assessment/` - Assessment-related pages and components
+    - `interview/` - Interview-related pages and components
+    - `common/` - Common recruiter components
+- `tests/` - Contains all test files
+  - `candidate/` - Tests for candidate flows
+  - `recruiter/` - Tests for recruiter flows
+    - `assessment/` - Tests for assessment functionality
+    - `interview/` - Tests for interview functionality
+    - `login/` - Tests for login flows
+
+## Component Organization
+
+1. Each page or component should be in its own file in the appropriate directory
+2. Components should follow the POM (Page Object Model) pattern
+3. Each page/component should inherit from BasePage
+4. Related components should be grouped in subdirectories
+
+## Component Relationships
+
+1. Use composition to include sub-components (e.g., DatePicker inside InviteCandidatesModal)
+2. Access sub-component methods directly via the component instance (e.g., `inviteModal.datePicker.selectDate()`)
+3. Don't duplicate sub-component methods in the parent component
+
+Example of proper component composition:
+
+```typescript
+export class InviteCandidatesModal extends BasePage {
+    readonly datePicker: DatePicker;
+    
+    constructor(page: Page) {
+        super(page);
+        this.datePicker = new DatePicker(page, this.inviteExpirationInput);
+    }
+    
+    // Use sub-component directly in tests: 
+    // await inviteModal.datePicker.selectDate(15, 6, 2023);
+}
+```
 
 ## Structure Guidelines
 

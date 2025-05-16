@@ -1,35 +1,35 @@
 {
-  "name": "auqa",
-  "description": "QA tests for Hackerearth.",
-  "type": "module",
-  "scripts": {
-    "postinstall": "playwright install",
-    "pretest": "tsc --noEmit && eslint --ext .ts",
-    "test": "playwright test",
-    "ui": "playwright test --ui",
-    "test:prod": "ENVIRONMENT=production playwright test",
-    "test:preprod": "ENVIRONMENT=preprod playwright test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "dependencies": {
-    "@playwright/test": "^1.49.1",
-    "csv-parse": "^5.6.0",
-    "dotenv": "^16.4.7"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.26.0",
-    "@types/node": "^22.15.17",
-    "@typescript-eslint/eslint-plugin": "^8.32.1",
-    "@typescript-eslint/parser": "^8.32.1",
-    "eslint": "^9.26.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-playwright": "^2.2.0",
-    "eslint-plugin-prettier": "^5.4.0",
-    "prettier": "^3.5.3",
-    "tsx": "^4.19.2",
-    "typescript": "^5.0.0"
-  },
-  "packageManager": "pnpm@10.11.0"
+    "name": "auqa",
+    "description": "QA tests for Hackerearth.",
+    "type": "module",
+    "scripts": {
+        "postinstall": "playwright install",
+        "pretest": "tsc --noEmit && eslint --ext .ts",
+        "test": "playwright test",
+        "ui": "playwright test --ui",
+        "test:prod": "ENVIRONMENT=production playwright test",
+        "test:preprod": "ENVIRONMENT=preprod playwright test",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "@playwright/test": "^1.49.1",
+        "csv-parse": "^5.6.0",
+        "dotenv": "^16.4.7"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.26.0",
+        "@types/node": "^22.15.17",
+        "@typescript-eslint/eslint-plugin": "^8.32.1",
+        "@typescript-eslint/parser": "^8.32.1",
+        "eslint": "^9.26.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-import": "^2.31.0",
+        "eslint-plugin-playwright": "^2.2.0",
+        "eslint-plugin-prettier": "^5.4.0",
+        "prettier": "^3.5.3",
+        "tsx": "^4.19.2",
+        "typescript": "^5.0.0"
+    },
+    "packageManager": "pnpm@10.11.0"
 }

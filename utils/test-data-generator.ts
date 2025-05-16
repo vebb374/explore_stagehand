@@ -1,5 +1,5 @@
 export function generateRandomEmail(): string {
-    return `test-${Date.now()}@example.com`;
+    return `test-${Math.random().toString(36).substring(2, 6)}-${Date.now()}@example.com`;
 }
 
 export function generateRandomAssessmentName(): string {

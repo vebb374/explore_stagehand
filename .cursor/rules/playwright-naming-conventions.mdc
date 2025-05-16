@@ -5,25 +5,67 @@ alwaysApply: false
 ---
 # Playwright Naming Conventions
 
-Consistent naming conventions make our code more readable and maintainable. Follow these conventions for all Playwright tests.
+This rule provides guidance on naming conventions for Playwright test files, page objects, methods, and locators.
 
 ## File Naming
 
-1. **Page Objects**: Use PascalCase and end with "Page"
-   - `AssessmentOverviewPage.ts`
-   - `LoginPage.ts`
+1. Use kebab-case for file names: `assessment-overview-page.ts`, `invite-candidates-modal.ts`
+2. Use descriptive names that indicate the file's purpose
+3. Page object files should end with `-page.ts` or specify their component type (e.g., `-modal.ts`, `-component.ts`)
+4. Test files should end with `.spec.ts`
 
-2. **Components**: Use PascalCase and end with "Component"
-   - `SettingsComponent.ts`
-   - `QuestionTableComponent.ts`
+## Class Naming
 
-3. **Test Files**: Use kebab-case and end with ".spec.ts"
-   - `assessment-overview.spec.ts`
-   - `login-functionality.spec.ts`
+1. Use PascalCase for class names: `AssessmentOverviewPage`, `InviteCandidatesModal`
+2. Page objects should be named after the page they represent
+3. Component classes should include their component type in the name: `DatePicker`, `TopNavbarComponent`
 
-4. **Fixture Files**: Use `fixtures.ts` (lowercase) for each test group directory
-   - `tests/recruiter/assessment/fixtures.ts`
-   - `tests/candidate/onboarding/fixtures.ts`
+## Method Naming
+
+1. Use camelCase for method names: `addCandidate()`, `selectDate()`
+2. Use verb phrases that describe the action: `click...`, `select...`, `fill...`, `get...`, `waitFor...`
+3. Step methods that represent user flows should have descriptive names: `loginAsRecruiter()`, `addCandidateWithDetails()`
+4. Boolean methods should use `is`, `has`, or `can` prefixes: `isEmailErrorVisible()`, `hasInvitationExpired()`
+
+## Locator Naming
+
+1. Use camelCase for locator properties: `emailInput`, `addCandidateButton`
+2. Name locators after the UI element they represent
+3. Use suffix to indicate the element type: `...Input`, `...Button`, `...Link`, `...Dropdown`, `...Table`
+4. Use plurals for collections of elements: `removeButtons`, `daysCells`
+
+## Test Naming
+
+1. Use descriptive test names that clearly indicate what is being tested
+2. Start with "should": `should validate invite modal functionality and mandatory fields`
+3. Group related tests using `test.describe()`
+4. Use tags to categorize tests: `@smoke`, `@functional`
+
+Example:
+
+```typescript
+// File: invite-candidates-modal.ts
+export class InviteCandidatesModal extends BasePage {
+    readonly emailInput: Locator;
+    readonly addCandidateButton: Locator;
+    readonly datePicker: DatePicker;
+    
+    async addCandidate(email: string, firstName?: string, lastName?: string) {
+        // Implementation
+    }
+    
+    async isEmailErrorVisible(): Promise<boolean> {
+        // Implementation
+    }
+}
+
+// File: invite-candidates.spec.ts
+test("should validate invite modal functionality and mandatory fields", async ({ 
+    assessmentOverviewPage 
+}) => {
+    // Test implementation
+});
+```
 
 ## Variable & Function Naming
 
@@ -74,8 +116,6 @@ Tests should be named to clearly indicate what they're verifying:
 test('should display error message with invalid credentials', async () => { ... });
 test('should navigate to dashboard after successful login', async () => { ... });
 ```
-
-
 
 1. **Named exports**: Use the exact name
    ```typescript
