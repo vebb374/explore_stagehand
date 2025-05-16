@@ -10,16 +10,14 @@ type CustomFixtures = {
  * Extended test fixtures with candidate credentials
  */
 export const test = base.extend<CustomFixtures>({
-  // Define candidateCredentials fixture
-  // eslint-disable-next-line no-empty-pattern
-  getUniqueCandidateCredentials: async ({}, use, testInfo) => {
+    // Define candidateCredentials fixture
+    // eslint-disable-next-line no-empty-pattern
+    getUniqueCandidateCredentials: async ({}, use, testInfo) => {
     // Get unique credentials based on test title
-    const credentials = getCandidateCredentials(testInfo.title);
-    console.log(`Using candidate email: ${credentials.email} for test: ${testInfo.title}`);
+        const credentials = getCandidateCredentials(testInfo.title);
+        console.log(`Using candidate email: ${credentials.email} for test: ${testInfo.title}`);
     
-    // Provide credentials to the test
-    await use(credentials);
-  }
+        // Provide credentials to the test
+        await use(credentials);
+    }
 });
-
-export { expect } from "@playwright/test"; 

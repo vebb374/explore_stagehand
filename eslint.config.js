@@ -38,7 +38,7 @@ export default [
       "@typescript-eslint/await-thenable": "error",
       "semi": ["error", "always"],
       "quotes": ["error", "double"],
-      "indent": ["error", 2],
+      "indent": ["error", 4],
     }
   },
   // Playwright recommended rules for tests

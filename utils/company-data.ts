@@ -3,7 +3,7 @@ import qa_test_company_15 from "test-data/companies/qa_test_company_15.js";
 
 // Map of all company data files
 const companies = {
-  qa_test_company_15
+    qa_test_company_15
 } as const;
 
 export type CompanyKey = keyof typeof companies;
@@ -18,5 +18,5 @@ export type CompanyKey = keyof typeof companies;
  * const { ADMIN, ADMIN_PASSWORD } = getCompanyData('qa_test_company_15');
  */
 export function getCompanyData<K extends CompanyKey>(key: K): CompanyData {
-  return companies[key];
+    return companies[key];
 } 
