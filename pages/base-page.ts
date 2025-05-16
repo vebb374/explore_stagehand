@@ -9,9 +9,9 @@ export class BasePage {
     protected page: Page;
 
     /**
-   * Constructor for the base page
-   * @param page - Playwright page object
-   */
+     * Constructor for the base page
+     * @param page - Playwright page object
+     */
     constructor(page: Page) {
         this.page = page;
     }
@@ -19,10 +19,7 @@ export class BasePage {
 
 /* eslint-disable @typescript-eslint/no-unsafe-function-type,@typescript-eslint/no-explicit-any */
 export function step(stepName?: string) {
-    return function decorator(
-        target: Function,
-        context: ClassMethodDecoratorContext
-    ) {
+    return function decorator(target: Function, context: ClassMethodDecoratorContext) {
         return function replacementMethod(this: any, ...args: any[]) {
             const name = `${stepName || (context.name as string)} (${this.constructor.name})`;
             return test.step(name, async () => {

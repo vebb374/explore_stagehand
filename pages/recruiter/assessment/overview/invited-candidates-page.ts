@@ -58,43 +58,29 @@ export class InvitedCandidatesPage extends BasePage {
         });
 
         // Table columns
-        this.checkAllCheckbox = this.candidatesTable.locator(
-            "thead input[type='checkbox']"
-        );
-        this.candidateEmailColumn = this.candidatesTable.locator(
-            "th:has-text('Candidate email')"
-        );
-        this.candidateNameColumn = this.candidatesTable.locator(
-            "th:has-text('Candidate name')"
-        );
+        this.checkAllCheckbox = this.candidatesTable.locator("thead input[type='checkbox']");
+        this.candidateEmailColumn = this.candidatesTable.locator("th:has-text('Candidate email')");
+        this.candidateNameColumn = this.candidatesTable.locator("th:has-text('Candidate name')");
         this.statusColumn = this.candidatesTable.locator("th:has-text('Status')");
-        this.expiryDateColumn = this.candidatesTable.locator(
-            "th:has-text('Expiry date')"
-        );
-        this.invitedOnColumn = this.candidatesTable.locator(
-            "th:has-text('Invited on')"
-        );
-        this.invitedByColumn = this.candidatesTable.locator(
-            "th:has-text('Invited by')"
-        );
-        this.emailStatusColumn = this.candidatesTable.locator(
-            "th:has-text('Email status')"
-        );
+        this.expiryDateColumn = this.candidatesTable.locator("th:has-text('Expiry date')");
+        this.invitedOnColumn = this.candidatesTable.locator("th:has-text('Invited on')");
+        this.invitedByColumn = this.candidatesTable.locator("th:has-text('Invited by')");
+        this.emailStatusColumn = this.candidatesTable.locator("th:has-text('Email status')");
         this.tagsColumn = this.candidatesTable.locator("th:has-text('Tags')");
     }
 
     /**
-   * Wait for the page to load
-   */
+     * Wait for the page to load
+     */
     async waitForPageLoad() {
         await expect(this.pageTitle).toBeVisible();
         await expect(this.candidatesTable).toBeVisible();
     }
 
     /**
-   * Get the count of invited candidates from the page
-   * @returns The number of invited candidates
-   */
+     * Get the count of invited candidates from the page
+     * @returns The number of invited candidates
+     */
     async getInvitedCandidatesCount(): Promise<number> {
         const text = (await this.invitedCountText.textContent()) || "";
         const match = text.match(/(\d+)\s+candidate/);
@@ -102,9 +88,9 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Get the count of candidates who have not taken the test
-   * @returns The number of candidates who haven't taken the test
-   */
+     * Get the count of candidates who have not taken the test
+     * @returns The number of candidates who haven't taken the test
+     */
     async getNotTakenCount(): Promise<number> {
         const text = (await this.notTakenCountText.textContent()) || "";
         const match = text.match(/(\d+)\s+candidate/);
@@ -112,9 +98,9 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Get all candidate emails from the table
-   * @returns Array of candidate email addresses
-   */
+     * Get all candidate emails from the table
+     * @returns Array of candidate email addresses
+     */
     async getCandidateEmails(): Promise<string[]> {
         const emails: string[] = [];
         const emailCells = this.candidatesTable.locator("tbody td:nth-child(3)");
@@ -129,20 +115,20 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Check if a candidate with the specified email exists in the table
-   * @param email - The email to search for
-   * @returns True if the candidate exists
-   */
+     * Check if a candidate with the specified email exists in the table
+     * @param email - The email to search for
+     * @returns True if the candidate exists
+     */
     async candidateExists(email: string): Promise<boolean> {
         const cellSelector = `td:has-text("${email}")`;
         return (await this.candidatesTable.locator(cellSelector).count()) > 0;
     }
 
     /**
-   * Get the status of a candidate by email
-   * @param email - The email to search for
-   * @returns The status text or null if candidate not found
-   */
+     * Get the status of a candidate by email
+     * @param email - The email to search for
+     * @returns The status text or null if candidate not found
+     */
     async getCandidateStatus(email: string): Promise<string | null> {
         const row = this.candidateRows.filter({
             has: this.candidatesTable.locator(`td:has-text("${email}")`),
@@ -154,10 +140,10 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Get the tags of a candidate by email
-   * @param email - The email to search for
-   * @returns Array of tag strings or empty array if no tags found
-   */
+     * Get the tags of a candidate by email
+     * @param email - The email to search for
+     * @returns Array of tag strings or empty array if no tags found
+     */
     async getCandidateTags(email: string): Promise<string[]> {
         const row = this.candidateRows.filter({
             has: this.candidatesTable.locator(`td:has-text("${email}")`),
@@ -180,21 +166,21 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Verify if a candidate has specific tags
-   * @param email - The email to search for
-   * @param expectedTags - Array of tags to verify
-   * @returns True if all tags are found
-   */
+     * Verify if a candidate has specific tags
+     * @param email - The email to search for
+     * @param expectedTags - Array of tags to verify
+     * @returns True if all tags are found
+     */
     async hasTags(email: string, expectedTags: string[]): Promise<boolean> {
         const candidateTags = await this.getCandidateTags(email);
         return expectedTags.every((tag) => candidateTags.includes(tag));
     }
 
     /**
-   * Get the email status of a candidate (Queued, Sent, Undelivered, etc.)
-   * @param email - The email to search for
-   * @returns The email status or null if candidate not found
-   */
+     * Get the email status of a candidate (Queued, Sent, Undelivered, etc.)
+     * @param email - The email to search for
+     * @returns The email status or null if candidate not found
+     */
     async getCandidateEmailStatus(email: string): Promise<string | null> {
         const row = this.candidateRows.filter({
             has: this.candidatesTable.locator(`td:has-text("${email}")`),
@@ -206,22 +192,22 @@ export class InvitedCandidatesPage extends BasePage {
     }
 
     /**
-   * Click the Download Invites button
-   */
+     * Click the Download Invites button
+     */
     async downloadInvites() {
         await this.downloadButton.click();
     }
 
     /**
-   * Click the Invite Candidates button
-   */
+     * Click the Invite Candidates button
+     */
     async clickInviteCandidates() {
         await this.inviteCandidatesButton.click();
     }
 
     /**
-   * Click the back button to return to test overview
-   */
+     * Click the back button to return to test overview
+     */
     async goBack() {
         await this.backButton.click();
     }

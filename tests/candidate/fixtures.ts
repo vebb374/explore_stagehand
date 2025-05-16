@@ -1,11 +1,9 @@
 import { test as base } from "utils/base-fixtures.js";
 import { LoginPage } from "pages/common-components/login-page.js";
 
-
 // Define the type for our custom fixtures
 type CustomFixtures = {
     loginPage: LoginPage;
-
 };
 
 /**
@@ -17,4 +15,4 @@ export const test = base.extend<CustomFixtures>({
     },
 });
 
-export { expect } from "@playwright/test"; 
+export { expect } from "@playwright/test";

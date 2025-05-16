@@ -4,7 +4,6 @@ import { BasePage } from "pages/base-page.js";
 export class RecruiterCommonComponents extends BasePage {
     readonly yellowAlert: Locator;
     readonly closeYellowAlertButton: Locator;
- 
 
     constructor(page: Page) {
         super(page);

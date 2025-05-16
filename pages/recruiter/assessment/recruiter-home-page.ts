@@ -8,7 +8,7 @@ export class RecruierHomePage extends BasePage {
     readonly testCard: Locator;
 
     constructor(page: Page) {
-        super(page); 
+        super(page);
 
         this.topNav = new TopNavbarComponent(page);
         this.createNewTestButton = page.getByRole("button", {

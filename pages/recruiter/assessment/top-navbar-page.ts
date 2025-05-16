@@ -30,5 +30,4 @@ export class TopNavbarComponent extends BasePage {
     async navigateToInterviews() {
         await this.interviewsLink.click();
     }
-
 }

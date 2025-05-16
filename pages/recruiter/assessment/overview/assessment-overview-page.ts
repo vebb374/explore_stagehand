@@ -42,7 +42,7 @@ export class AssessmentOverviewPage extends BasePage {
         this.testTitle = page.locator("div.test-title");
         this.testLinkButton = page.getByRole("button", { name: /Copy link/i });
         this.previewButton = page.getByRole("link", { name: /Preview/i });
-        this.inviteCandidatesButton = page.getByRole("button", {
+        this.inviteCandidatesButton = page.locator(".main-app-header-actions").getByRole("button", {
             name: /Invite candidates/i,
         });
         this.moreActionsButton = page
@@ -58,32 +58,32 @@ export class AssessmentOverviewPage extends BasePage {
 
         // Page elements
         this.assessmentMetrics = page.locator("div.grid").filter({ hasText: /Total candidates/ });
-        this.candidateStatusTabs = page.locator("div[role=\"tablist\"]");
+        this.candidateStatusTabs = page.locator('div[role="tablist"]');
         this.invitedCandidatesTab = page.getByRole("tab", { name: /Invited/ });
         this.candidatesTable = page.locator("table");
-        this.successToast = page.locator("div[role=\"status\"]");
+        this.successToast = page.locator('div[role="status"]');
     }
 
     /**
-   * Wait for the page to load
-   */
+     * Wait for the page to load
+     */
     async waitForPageLoad() {
         await expect(this.testTitle).toBeVisible();
         await expect(this.inviteCandidatesButton).toBeVisible();
     }
 
     /**
-   * Get the test title
-   * @returns The test title text
-   */
+     * Get the test title
+     * @returns The test title text
+     */
     async getTestTitle(): Promise<string> {
         return (await this.testTitle.textContent()) || "";
     }
 
     /**
-   * Click the Invite Candidates button and return the modal component
-   * @returns The invite candidates modal component
-   */
+     * Click the Invite Candidates button and return the modal component
+     * @returns The invite candidates modal component
+     */
     async clickInviteCandidates(): Promise<InviteCandidatesModal> {
         await this.inviteCandidatesButton.click();
         const inviteModal = new InviteCandidatesModal(this.page);
@@ -92,8 +92,8 @@ export class AssessmentOverviewPage extends BasePage {
     }
 
     /**
-   * Navigate to the Invited candidates tab
-   */
+     * Navigate to the Invited candidates tab
+     */
     async navigateToInvitedTab() {
         await this.invitedTab.click();
         // The URL should change to include /candidates-invited/ path
@@ -101,29 +101,29 @@ export class AssessmentOverviewPage extends BasePage {
     }
 
     /**
-   * Copy the test link
-   */
+     * Copy the test link
+     */
     async copyTestLink() {
         await this.testLinkButton.click();
     }
 
     /**
-   * Click the preview button to open test in candidate interface
-   */
+     * Click the preview button to open test in candidate interface
+     */
     async previewTest() {
         await this.previewButton.click();
     }
 
     /**
-   * Click the back button to return to tests listing
-   */
+     * Click the back button to return to tests listing
+     */
     async goBack() {
         await this.backButton.click();
     }
 
     /**
-   * Opens the invite candidates modal
-   */
+     * Opens the invite candidates modal
+     */
     async openInviteCandidatesModal(): Promise<InviteCandidatesModal> {
         await this.inviteCandidatesButton.click();
         const inviteCandidatesModal = new InviteCandidatesModal(this.page);
@@ -134,15 +134,15 @@ export class AssessmentOverviewPage extends BasePage {
     }
 
     /**
-   * Switches to the invited candidates tab
-   */
+     * Switches to the invited candidates tab
+     */
     async switchToInvitedCandidatesTab() {
         await this.invitedCandidatesTab.click();
     }
 
     /**
-   * Gets the count of invited candidates from the tab
-   */
+     * Gets the count of invited candidates from the tab
+     */
     async getInvitedCandidatesCount(): Promise<number> {
         const tabText = await this.invitedCandidatesTab.textContent();
         const match = tabText?.match(/\((\d+)\)/);
@@ -150,29 +150,29 @@ export class AssessmentOverviewPage extends BasePage {
     }
 
     /**
-   * Checks if a candidate exists in the candidates table
-   */
+     * Checks if a candidate exists in the candidates table
+     */
     async checkCandidateExists(email: string): Promise<boolean> {
         const tableRows = this.candidatesTable.locator("tbody tr");
         const count = await tableRows.count();
-    
+
         for (let i = 0; i < count; i++) {
             const rowText = await tableRows.nth(i).textContent();
             if (rowText && rowText.includes(email)) {
                 return true;
             }
         }
-    
+
         return false;
     }
 
     /**
-   * Gets the invitation status of a candidate
-   */
+     * Gets the invitation status of a candidate
+     */
     async getCandidateInvitationStatus(email: string): Promise<string | null> {
         const tableRows = this.candidatesTable.locator("tbody tr");
         const count = await tableRows.count();
-    
+
         for (let i = 0; i < count; i++) {
             const rowText = await tableRows.nth(i).textContent();
             if (rowText && rowText.includes(email)) {
@@ -180,13 +180,13 @@ export class AssessmentOverviewPage extends BasePage {
                 return await statusCell.textContent();
             }
         }
-    
+
         return null;
     }
 
     /**
-   * Wait for success toast to appear
-   */
+     * Wait for success toast to appear
+     */
     async waitForSuccessToast() {
         await this.successToast.waitFor({ state: "visible" });
     }
