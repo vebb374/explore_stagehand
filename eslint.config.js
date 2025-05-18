@@ -42,7 +42,6 @@ export default [
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/await-thenable": "error",
             semi: ["error", "always"],
-            // indent: ["error", 4],
             // Prettier rules
             "prettier/prettier": "error",
         },

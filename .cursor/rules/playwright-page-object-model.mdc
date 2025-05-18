@@ -1,6 +1,6 @@
 ---
 description: 
-globs: *.ts
+globs: pages/**,tests/**
 alwaysApply: false
 ---
 # Playwright Page Object Model Pattern

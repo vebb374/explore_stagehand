@@ -28,4 +28,8 @@ export class RecruierHomePage extends BasePage {
     async clickFirstVisibleTestCard() {
         await this.testCard.first().click();
     }
+
+    async go() {
+        await this.page.goto("/recruiter/", { waitUntil: "domcontentloaded" });
+    }
 }

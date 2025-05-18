@@ -100,3 +100,60 @@ test-data/
   └── companies/            # Company/recruiter test data
 ```
 
+## API-Driven Test Data Setup
+
+Use API clients to create, modify, and clean up test data efficiently:
+
+```typescript
+// tests/recruiter/assessment/create.spec.ts
+import { test, expect } from './fixtures';
+import { getCompanyData } from "utils";
+
+test.describe("Assessment Creation", () => {
+  let assessmentId: string;
+  
+  test.beforeEach(async ({ IsolatedAPIClient }) => {
+    // Login via API
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
+    await IsolatedAPIClient.auth.login(ADMIN, PASSWORD);
+    
+    // Create test data via API
+    const createResponse = await IsolatedAPIClient.request.post("/api/create-assessment", {
+      data: {
+        name: "Test Assessment",
+        type: "coding"
+      }
+    });
+    
+    const data = await createResponse.json();
+    assessmentId = data.id;
+  });
+  
+  test.afterEach(async ({ IsolatedAPIClient }) => {
+    // Clean up test data after test
+    if (assessmentId) {
+      await IsolatedAPIClient.request.delete(`/api/assessments/${assessmentId}`);
+    }
+  });
+  
+  test("should edit created assessment", async ({ assessmentOverviewPage }) => {
+    // Use the created assessment in the test
+    await assessmentOverviewPage.navigateTo(assessmentId);
+    // Continue with test...
+  });
+});
+```
+
+## API vs UI for Test Data
+
+- **Use API for**:
+  - Creating prerequisite data efficiently
+  - Setting up complex test scenarios
+  - Cleaning up after tests
+  - Verifying data changes in the backend
+
+- **Use UI for**:
+  - Testing the actual user workflows
+  - Validating user-facing functionality
+  - End-to-end user journeys
+

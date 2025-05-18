@@ -2,16 +2,24 @@ import { test, expect } from "./fixtures.js";
 import { generateRandomEmail, getCompanyData } from "utils";
 
 test.describe("Assessment Candidate Invitation Flow", () => {
-    test.beforeEach(async ({ loginPage, topNavbar, recruiterHomePage, assessmentOverviewPage }) => {
-        // Get test company credentials
-        const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
+    test.beforeEach(
+        async ({
+            currentSessionApiClient,
+            topNavbar,
+            recruiterHomePage,
+            assessmentOverviewPage,
+        }) => {
+            // Get test company credentials
+            const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
 
-        // Login as recruiter
-        await loginPage.loginAsRecruiter(ADMIN, PASSWORD);
-        await topNavbar.navigateToAssessments();
-        await recruiterHomePage.clickFirstVisibleTestCard();
-        await assessmentOverviewPage.waitForPageLoad();
-    });
+            // Login as recruiter
+            await currentSessionApiClient.auth.login(ADMIN, PASSWORD);
+            await recruiterHomePage.go();
+            await topNavbar.navigateToAssessments();
+            await recruiterHomePage.clickFirstVisibleTestCard();
+            await assessmentOverviewPage.waitForPageLoad();
+        }
+    );
 
     test(
         "should validate invite modal functionality and mandatory fields",

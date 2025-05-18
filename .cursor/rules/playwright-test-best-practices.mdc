@@ -9,22 +9,35 @@ These rules ensure our tests are maintainable, reliable, and focused.
 
 ## Fixture-Based Testing
 
-1. **Use Fixtures for Page Objects and Test Data**:
+1. **Use Fixtures for Page Objects, API Clients, and Test Data**:
    - Each test group should have its own `fixtures.ts` file
-   - Access page objects and test data through fixtures
+   - Access page objects, API clients, and test data through fixtures
    - Extend base fixtures with test-specific fixtures
 
    ```typescript
    // tests/recruiter/assessment/fixtures.ts
    import { test as base } from "utils/base-fixtures.js";
    import { AssessmentPage } from "pages/recruiter/assessment/AssessmentPage.js";
+   import { ApiClient } from "utils/api/api-client.js";
 
    export const test = base.extend<{
      assessmentPage: AssessmentPage;
+     currentSessionApiClient: ApiClient;
+     IsolatedAPIClient: ApiClient;
    }>({
      assessmentPage: async ({ page }, use) => {
        await use(new AssessmentPage(page));
-     }
+     },
+     currentSessionApiClient: async ({ context }, use) => {
+       const client = new ApiClient(context.request, "CurrentSession");
+       await use(client);
+       await context.request.dispose();
+     },
+     IsolatedAPIClient: async ({ request }, use) => {
+       const client = new ApiClient(request, "IsolatedAPI");
+       await use(client);
+       await request.dispose();
+     },
    });
 
    export { expect } from "@playwright/test";
@@ -144,6 +157,58 @@ test.describe('@functional Assessment Overview', () => {
   });
 });
 ```
+
+## API Testing Best Practices
+
+1. **Separate API Test Files**:
+   - Keep pure API tests in their own files/folders
+   - Example: `tests/recruiter/api/assessments.spec.ts`
+
+2. **API Client Usage**:
+   - For pure API tests, use the `apiClient` fixture
+   - For UI tests with API support, use the appropriate client:
+     - `currentSessionApiClient`: When you need the same session as the browser
+     - `IsolatedAPIClient`: When you need a separate session
+
+3. **API Test Structure**:
+   ```typescript
+   // tests/recruiter/api/sample.spec.ts
+   import { test, expect } from "./fixtures.js";
+
+   test.describe("Recruiter API Tests", () => {
+     test("should login and fetch data", async ({ apiClient }) => {
+       // Login
+       await apiClient.auth.login("email@example.com", "password");
+       
+       // Make API call
+       const response = await apiClient.request.get("/some/endpoint");
+       
+       // Assert response
+       expect(response.ok()).toBe(true);
+       expect(response.status()).toBe(200);
+     });
+   });
+   ```
+
+4. **Hybrid UI/API Tests**:
+   ```typescript
+   test("should use API and UI together", async ({ 
+     page, 
+     currentSessionApiClient, 
+     assessmentOverviewPage 
+   }) => {
+     // UI login
+     await page.goto("/login");
+     // ...login steps...
+     
+     // API data setup using same session
+     const apiResponse = await currentSessionApiClient.request.post("/create-data");
+     const { id } = await apiResponse.json();
+     
+     // Continue with UI test using created data
+     await assessmentOverviewPage.navigateTo(id);
+   });
+   ```
 
 ## Handling Flaky Tests
 
