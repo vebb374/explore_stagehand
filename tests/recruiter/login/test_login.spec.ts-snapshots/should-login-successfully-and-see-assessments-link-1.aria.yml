@@ -1,0 +1,15 @@
+- list:
+  - listitem:
+    - link "Assessments"
+  - listitem:
+    - link "Interviews"
+  - listitem:
+    - tooltip "Upgrade your subscription plan to access this feature. For more help, reach out to support@hackerearth.com."
+  - listitem:
+    - link "Profiles"
+  - listitem:
+    - link "Library"
+  - listitem:
+    - link "Reports"
+  - listitem:
+    - button "Hackathons"

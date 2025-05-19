@@ -5,15 +5,17 @@ export class TopNavbarComponent extends BasePage {
     readonly assessmentsLink: Locator;
     readonly homeLink: Locator;
     readonly interviewsLink: Locator;
+    readonly container: Locator;
 
     constructor(page: Page) {
         super(page);
-        this.assessmentsLink = page.getByRole("link", {
+        this.container = page.locator(".recruiter-header .middle");
+        this.assessmentsLink = this.container.getByRole("link", {
             name: "Assessments",
             exact: true,
         });
-        this.homeLink = page.getByRole("link", { name: "Home" });
-        this.interviewsLink = page.getByRole("link", {
+        this.homeLink = this.container.getByRole("link", { name: "Home" });
+        this.interviewsLink = this.container.getByRole("link", {
             name: "Interviews",
             exact: true,
         });
