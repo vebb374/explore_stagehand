@@ -1,6 +1,6 @@
 ---
-description: 
-globs: tests/**/*.ts,test-data/**
+description: when using Page Object model in test files or using testdata in testcases
+globs: 
 alwaysApply: false
 ---
 # Playwright Test Data Management

@@ -1,6 +1,6 @@
 ---
-description: 
-globs: pages/**,tests/**
+description: when writing testcases or creating pages for Page object model (POM)
+globs: 
 alwaysApply: false
 ---
 # Playwright Page Object Model Pattern

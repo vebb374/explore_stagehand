@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: when creating playwright testcases
+globs: 
 alwaysApply: false
 ---
 # Playwright API Services and Testing

@@ -2,7 +2,7 @@ import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "pages/base-page.js";
 import { TopNavbarComponent } from "./top-navbar-page.js";
 
-export class RecruierHomePage extends BasePage {
+export class RecruiterHomePage extends BasePage {
     readonly topNav: TopNavbarComponent;
     readonly createNewTestButton: Locator;
     readonly testCard: Locator;

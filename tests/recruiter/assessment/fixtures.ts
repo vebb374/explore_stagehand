@@ -2,7 +2,7 @@ import { test as base } from "utils/base-fixtures.js";
 import { LoginPage } from "pages/common-components/login-page.js";
 import { TopNavbarComponent } from "pages/recruiter/assessment/top-navbar-page.js";
 import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/assessment-overview-page.js";
-import { RecruierHomePage } from "pages/recruiter/assessment/recruiter-home-page.js";
+import { RecruiterHomePage } from "pages/recruiter/assessment/recruiter-home-page.js";
 import { request } from "@playwright/test";
 import { ApiClient } from "utils/api/api-client.js";
 import * as dotenv from "dotenv";
@@ -16,7 +16,7 @@ type CustomFixtures = {
     loginPage: LoginPage;
     topNavbar: TopNavbarComponent;
     assessmentOverviewPage: AssessmentOverviewPage;
-    recruiterHomePage: RecruierHomePage;
+    recruiterHomePage: RecruiterHomePage;
 
     //API clients
     currentSessionApiClient: ApiClient;
@@ -39,7 +39,7 @@ export const test = base.extend<CustomFixtures>({
         await use(new AssessmentOverviewPage(page));
     },
     recruiterHomePage: async ({ page }, use) => {
-        await use(new RecruierHomePage(page));
+        await use(new RecruiterHomePage(page));
     },
 
     //API CLients
