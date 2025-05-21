@@ -55,7 +55,6 @@ test.describe("Schedule Interview Later Functionality", () => {
     test("should be able to schedule an interview and see confirmation", async ({
         interviewPage,
         scheduleLaterModal,
-        page,
     }) => {
         // Only run this test when explicitly flagged to create actual interview data
 
@@ -76,17 +75,12 @@ test.describe("Schedule Interview Later Functionality", () => {
         // Schedule the interview
         await scheduleLaterModal.scheduleInterview();
 
-        // Wait for the confirmation dialog to appear
-        await expect(page.getByText(/Your interview is scheduled/)).toBeVisible({ timeout: 15000 });
-
-        // Verify interview link is displayed
-        await expect(page.getByText(/Interview link/)).toBeVisible();
-
-        // Close the dialog by clicking outside or some UI element
-        await page.getByRole("button", { name: "Edit interview" }).click();
+        // Verify confirmation and close the dialog
+        await interviewPage.verifyAndCloseScheduleConfirmation();
 
         // Verify we're back on the interviews page
         await expect(interviewPage.searchInput).toBeVisible();
+        await expect(interviewPage.confirmationMessage).toBeHidden();
     });
 
     test("should navigate between interview tabs", async ({ interviewPage }) => {

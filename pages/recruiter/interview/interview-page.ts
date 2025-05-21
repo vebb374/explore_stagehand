@@ -1,12 +1,24 @@
-import { Page, expect } from "@playwright/test";
+import { Locator, Page, expect } from "@playwright/test";
 import { BasePage } from "pages/base-page.js";
 import { ScheduleLaterModal } from "./schedule-later-modal.js";
-
+import { RecruiterCommonComponents } from "pages/recruiter/common/recruiter-common-components.js";
 /**
  * Page object for the Recruiter Interviews page
  */
 export class InterviewPage extends BasePage {
     readonly scheduleLaterModal: ScheduleLaterModal;
+    readonly commonComponents: RecruiterCommonComponents;
+
+    //locators
+    readonly interviewsTab: Locator;
+    readonly ongoingInterviewsRadio: Locator;
+    readonly upcomingInterviewsRadio: Locator;
+    readonly completedInterviewsRadio: Locator;
+    readonly cancelledInterviewsRadio: Locator;
+    readonly searchInput: Locator;
+    readonly createInterviewLinkButton: Locator;
+    readonly confirmationMessage: Locator;
+    readonly interviewLinkText: Locator;
 
     /**
      * Constructor for the InterviewPage class
@@ -15,20 +27,24 @@ export class InterviewPage extends BasePage {
     constructor(page: Page) {
         super(page);
         this.scheduleLaterModal = new ScheduleLaterModal(page);
+        this.commonComponents = new RecruiterCommonComponents(page);
+        this.interviewsTab = this.page.getByText("Interviews");
+        this.ongoingInterviewsRadio = this.page.getByText("Ongoing");
+        this.upcomingInterviewsRadio = this.page.getByText("Upcoming");
+        this.completedInterviewsRadio = this.page.getByText("Completed");
+        this.cancelledInterviewsRadio = this.page.getByText("Cancelled");
+        this.searchInput = this.page.getByRole("textbox", {
+            name: "Search for candidate using name or email",
+        });
+        this.createInterviewLinkButton = this.page.getByRole("button", {
+            name: "Create interview link",
+        });
+        this.confirmationMessage = this.commonComponents.NuskhaModalContainer.getByText(
+            /Your interview is scheduled/
+        );
+        this.interviewLinkText =
+            this.commonComponents.NuskhaModalContainer.getByText(/Interview link/);
     }
-
-    // Locators for elements on the page
-    readonly interviewsTab = this.page.getByText("Interviews");
-    readonly ongoingInterviewsRadio = this.page.getByText("Ongoing");
-    readonly upcomingInterviewsRadio = this.page.getByText("Upcoming");
-    readonly completedInterviewsRadio = this.page.getByText("Completed");
-    readonly cancelledInterviewsRadio = this.page.getByText("Cancelled");
-    readonly searchInput = this.page.getByRole("textbox", {
-        name: "Search for candidate using name or email",
-    });
-    readonly createInterviewLinkButton = this.page.getByRole("button", {
-        name: "Create interview link",
-    });
 
     /**
      * Navigates to the recruiter interviews page
@@ -101,5 +117,20 @@ export class InterviewPage extends BasePage {
     async openScheduleMultipleInterviews() {
         await this.scheduleLaterModal.openScheduleInterviewDropdown();
         await this.scheduleLaterModal.selectMultipleInterviews();
+    }
+
+    /**
+     * Verifies the interview confirmation dialog and closes it
+     * @param timeout - Optional timeout for the confirmation dialog (default: 15000ms)
+     */
+    async verifyAndCloseScheduleConfirmation(timeout = 15000) {
+        // Wait for the confirmation dialog to appear
+        await expect(this.confirmationMessage).toBeVisible({ timeout });
+
+        // Verify interview link is displayed
+        await expect(this.interviewLinkText).toBeVisible();
+
+        // Close the dialog by clicking outside
+        await this.commonComponents.closeNuskhaModal();
     }
 }
