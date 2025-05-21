@@ -15,6 +15,9 @@ test-data/candidates/infy_pref_test_users_40K/
 # Reports
 /test-results/
 
+#snapshots
+**/*.ts-snapshots
+
 # System files
 .DS_Store
 
