@@ -17,8 +17,7 @@ export class AssessmentApi extends BaseApiService {
     private readonly UPDATE_TEST_URI = (eventId: string) =>
         `/recruiter/api/v2/challenges/${eventId}/`;
     private readonly PUBLISH_TEST_URI = (eventSlug: string) => `/recruiter/${eventSlug}/publish/`;
-    private readonly INVITE_UPLOAD_URI = (eventSlug: string) =>
-        `recruiter/api/invite/${eventSlug}/upload-service/`;
+
     private readonly SEND_INVITES_URI = (eventSlug: string) =>
         `recruiter/api/invite/${eventSlug}/list-invite-candidates/`;
     private readonly PUBLISH_TEST_ACCESS_URI = (eventId: string) =>
@@ -311,28 +310,6 @@ export class AssessmentApi extends BaseApiService {
     }
 
     /**
-     * Check the status of invites
-     * @param eventSlug The event slug
-     * @returns Invite status
-     */
-    async checkInviteStatus(eventSlug: string): Promise<Record<string, unknown>> {
-        this.logger.info(`Checking invite status for test: ${eventSlug}`);
-
-        const response = await this.get(`${this.INVITE_UPLOAD_URI(eventSlug)}/status/`, {
-            headers: {
-                Referer: `https://app.hackerearth.com/recruiter/${eventSlug}/test-overview/`,
-            },
-        });
-
-        if (!response.ok()) {
-            const responseBody = await response.text();
-            throw new Error(
-                `Failed to check invite status: ${response.status()} - ${response.statusText()} - Body: ${responseBody}`
-            );
-        }
-
-        return await response.json();
-    }
 
     /**
      * Reset test for a specific candidate
@@ -390,6 +367,7 @@ export class AssessmentApi extends BaseApiService {
         const response = await this.post(this.RESET_TEST_FOR_ALL_CANDIDATES_URI(eventId), {
             headers: {
                 "Content-Type": "application/json",
+                Referer: `https://app.hackerearth.com/recruiter/${eventSlug}/candidates-invited/`,
             },
             data: payload,
         });

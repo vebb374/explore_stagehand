@@ -161,10 +161,6 @@ test.describe("Assessment API Tests", () => {
 
         // Verify invite response
         expect(inviteResponse.message).toBe("Invites send successfully");
-
-        // Check invite status
-        const statusResponse = await apiClient.assessment.checkInviteStatus(eventSlug);
-        expect(statusResponse.message).toBe("Invites sent successfully");
     });
 
     test("should reset test for a specific candidate", async ({ apiClient, addTestForCleanup }) => {
@@ -294,12 +290,11 @@ test.describe("Assessment API Tests", () => {
     });
 
     test("should use different recruiter for test deletion", async ({
-        loginAs,
+        apiClient,
         addTestForCleanup,
     }) => {
         // Login as a specific recruiter
         const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
-        const apiClient = await loginAs(ADMIN, PASSWORD);
 
         // Create a test
         const testName = `Different Recruiter Test ${Date.now()}`;

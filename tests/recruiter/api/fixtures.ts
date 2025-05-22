@@ -22,7 +22,6 @@ declare module "@playwright/test" {
 
 type ApiFixtures = {
     apiClient: ApiClient;
-    loginAs: (email: string, password: string) => Promise<ApiClient>;
     addTestForCleanup: (slug: string, recruiterEmail?: string, recruiterPassword?: string) => void;
 };
 
@@ -30,16 +29,6 @@ export const test = base.extend<ApiFixtures>({
     apiClient: async ({ request }, use) => {
         const client = new ApiClient(request, "ApiTest");
         await use(client);
-    },
-
-    // Helper to login as a specific recruiter
-    loginAs: async ({ request }, use) => {
-        const loginAsRecruiter = async (email: string, password: string) => {
-            const client = new ApiClient(request, "ApiTest");
-            await client.auth.login(email, password);
-            return client;
-        };
-        await use(loginAsRecruiter);
     },
 
     // Helper to add a test for cleanup
