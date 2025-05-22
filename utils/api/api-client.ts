@@ -3,6 +3,7 @@ import { APIRequestContext } from "@playwright/test";
 import { AuthApi } from "./services/auth.js";
 import { LibraryApi } from "./services/library.js";
 import { AssessmentApi } from "./services/assessment.js";
+import { QuestionsApi } from "./services/questions.js";
 import { Logger } from "./logger.js";
 import { TokenManager } from "./token-manager.js";
 
@@ -10,6 +11,7 @@ export class ApiClient {
     readonly auth: AuthApi;
     readonly library: LibraryApi;
     readonly assessment: AssessmentApi;
+    readonly questions: QuestionsApi;
     readonly request: APIRequestContext;
     readonly logger: Logger;
     readonly tokenManager: TokenManager;
@@ -25,5 +27,6 @@ export class ApiClient {
         this.auth = new AuthApi(request, this.logger, this.tokenManager);
         this.library = new LibraryApi(request, this.logger, this.tokenManager);
         this.assessment = new AssessmentApi(request, this.logger, this.tokenManager);
+        this.questions = new QuestionsApi(request, this.logger, this.tokenManager);
     }
 }

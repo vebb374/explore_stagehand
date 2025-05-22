@@ -1,9 +1,10 @@
 import { CompanyData } from "test-data/companies/company-interface.js";
 import qa_test_company_15 from "test-data/companies/qa_test_company_15.js";
-
+import qa_test_company_32 from "test-data/companies/qa_test_company_32.js";
 // Map of all company data files
 const companies = {
     qa_test_company_15,
+    qa_test_company_32,
 } as const;
 
 export type CompanyKey = keyof typeof companies;

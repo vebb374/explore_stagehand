@@ -16,14 +16,17 @@ export class AssessmentApi extends BaseApiService {
         `recruiter/api/v2/challenges/${eventId}/proctoring-settings/`;
     private readonly UPDATE_TEST_URI = (eventId: string) =>
         `/recruiter/api/v2/challenges/${eventId}/`;
-    private readonly PUBLISH_TEST_URI = (eventSlug: string) =>
-        `recruiter/api/v2/challenges/${eventSlug}/publish/`;
+    private readonly PUBLISH_TEST_URI = (eventSlug: string) => `/recruiter/${eventSlug}/publish/`;
     private readonly INVITE_UPLOAD_URI = (eventSlug: string) =>
         `recruiter/api/invite/${eventSlug}/upload-service/`;
     private readonly SEND_INVITES_URI = (eventSlug: string) =>
         `recruiter/api/invite/${eventSlug}/list-invite-candidates/`;
     private readonly PUBLISH_TEST_ACCESS_URI = (eventId: string) =>
         `recruiter/api/v2/challenges/${eventId}/publish-test-access/`;
+    private readonly RESET_TEST_FOR_CANDIDATE_URI = (eventId: string) =>
+        `recruiter/api/challenges/${eventId}/reset-test/`;
+    private readonly RESET_TEST_FOR_ALL_CANDIDATES_URI = (eventId: string) =>
+        `/api/hackathon/events/${eventId}/reset/`;
 
     constructor(request: APIRequestContext, logger: Logger, tokenManager: TokenManager) {
         super(request, logger, tokenManager);
@@ -292,6 +295,7 @@ export class AssessmentApi extends BaseApiService {
         const response = await this.post(this.SEND_INVITES_URI(eventSlug), {
             headers: {
                 "Content-Type": "application/json",
+                Referer: `https://app.hackerearth.com/recruiter/${eventSlug}/test-overview/`,
             },
             data: { users_data: preparedList },
         });
@@ -314,7 +318,11 @@ export class AssessmentApi extends BaseApiService {
     async checkInviteStatus(eventSlug: string): Promise<Record<string, unknown>> {
         this.logger.info(`Checking invite status for test: ${eventSlug}`);
 
-        const response = await this.get(`${this.INVITE_UPLOAD_URI(eventSlug)}/status/`);
+        const response = await this.get(`${this.INVITE_UPLOAD_URI(eventSlug)}/status/`, {
+            headers: {
+                Referer: `https://app.hackerearth.com/recruiter/${eventSlug}/test-overview/`,
+            },
+        });
 
         if (!response.ok()) {
             const responseBody = await response.text();
@@ -324,6 +332,76 @@ export class AssessmentApi extends BaseApiService {
         }
 
         return await response.json();
+    }
+
+    /**
+     * Reset test for a specific candidate
+     * @param eventId The event ID
+     * @param candidateEmail The candidate's email address
+     * @returns API response
+     */
+    async resetTestForCandidate(
+        eventSlug: string,
+        eventId: string,
+        candidateEmail: string
+    ): Promise<APIResponse> {
+        this.logger.info(`Resetting test for candidate: ${candidateEmail} in event: ${eventId}`);
+
+        const payload = {
+            all: false,
+            emails: candidateEmail,
+        };
+
+        const response = await this.post(this.RESET_TEST_FOR_CANDIDATE_URI(eventId), {
+            headers: {
+                "Content-Type": "application/json",
+                Referer: `https://app.hackerearth.com/recruiter/${eventSlug}/candidates-invited/`,
+            },
+            data: payload,
+        });
+
+        if (!response.ok()) {
+            const responseBody = await response.text();
+            throw new Error(
+                `Failed to reset test for candidate: ${response.status()} - ${response.statusText()} - Body: ${responseBody}`
+            );
+        }
+
+        return response;
+    }
+
+    /**
+     * Reset test for all candidates
+     * @param eventSlug The event slug
+     * @returns API response
+     */
+    async resetTestForAllCandidates(eventSlug: string): Promise<APIResponse> {
+        this.logger.info(`Resetting test for all candidates in event: ${eventSlug}`);
+
+        // First get the event ID from the slug
+        const eventDetails = await this.getEventDetails(eventSlug);
+        const eventId = eventDetails.id;
+
+        const payload = {
+            all: true,
+            emails: "",
+        };
+
+        const response = await this.post(this.RESET_TEST_FOR_ALL_CANDIDATES_URI(eventId), {
+            headers: {
+                "Content-Type": "application/json",
+            },
+            data: payload,
+        });
+
+        if (!response.ok()) {
+            const responseBody = await response.text();
+            throw new Error(
+                `Failed to reset test for all candidates: ${response.status()} - ${response.statusText()} - Body: ${responseBody}`
+            );
+        }
+
+        return response;
     }
 
     /**
