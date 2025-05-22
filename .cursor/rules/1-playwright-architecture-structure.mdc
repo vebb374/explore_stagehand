@@ -3,9 +3,9 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Playwright Project Architecture
+# Playwright Project Architecture and Structure
 
-This rule provides information about our project's architecture, structure, and tooling for Playwright tests.
+This rule provides comprehensive information about our project's architecture, structure, and organization for Playwright tests.
 
 ## Project Structure
 
@@ -40,6 +40,42 @@ AuQA/
   └── tsconfig.json        # TypeScript configuration
 ```
 
+## Component Organization
+
+1. Pages should be broken down into logical components to improve maintainability and reusability
+2. Each page or component should be in its own file in the appropriate directory
+3. Components should follow the POM (Page Object Model) pattern
+4. Related components should be grouped in subdirectories
+
+## Component Relationships
+
+Use composition to build complex page structures:
+
+```
+AssessmentOverviewPage
+  ├── QuestionsComponent
+  ├── SettingsComponent
+  └── CandidatesComponent
+      └── InviteModal
+          
+```
+
+Example of proper component composition:
+
+```typescript
+export class InviteCandidatesModal extends BasePage {
+    readonly datePicker: DatePicker;
+    
+    constructor(page: Page) {
+        super(page);
+        this.datePicker = new DatePicker(page, this.inviteExpirationInput);
+    }
+    
+    // Use sub-component directly in tests: 
+    // await inviteModal.datePicker.selectDate(15, 6, 2023);
+}
+```
+
 ## Fixture Structure
 
 Each test group has its own `fixtures.ts` file that extends the base fixtures:
@@ -62,20 +98,90 @@ export const test = base.extend<CustomFixtures>({
 export { expect } from "@playwright/test";
 ```
 
-## Test Files
+## Example Directory Structure
 
-Test files import fixtures from their local `fixtures.ts` file:
+```
+pages/
+  ├── common-components/       # Shared components used across pages
+  │   ├── TopNavComponent.ts
+  │   └── SidebarComponent.ts
+  ├── recruiter/
+  │   ├── assessment/
+  │   │   ├── overview/
+  │   │   │   ├── AssessmentOverviewPage.ts      # Main page file
+  │   │   │   └── components/                    # Components specific to this page
+  │   │   │       ├── SettingsComponent.ts
+  │   │   │       ├── QuestionsOverviewComponent.ts
+  │   │   │       └── OtherDetailsComponent.ts
+  │   │   └── components/                      # Shared components within assessment context
+  │   │       └── AssessmentNavigationComponent.ts
+  │   └── interview/
+  │       └── [...]
+  └── candidate/
+      └── [...]
+tests/
+  ├── recruiter/
+  │   ├── assessment/
+  │   │   ├── fixtures.ts                      # Fixtures for assessment tests
+  │   │   └── overview.spec.ts                 # Tests for assessment overview page
+  │   └── interview/
+  │       ├── fixtures.ts                      # Fixtures for interview tests
+  │       └── [...]
+  └── candidate/
+      ├── fixtures.ts                          # Fixtures for candidate tests
+      └── [...]
+```
+
+## Component Implementation Example
 
 ```typescript
-// tests/recruiter/assessment/overview.spec.ts
-import { test, expect } from './fixtures';
+// pages/recruiter/assessment/overview/components/QuestionsOverviewComponent.ts
+import { Locator, Page } from '@playwright/test';
 
-test.describe('Assessment Overview', () => {
-  test('should display details', async ({ assessmentOverviewPage }) => {
-    await assessmentOverviewPage.navigateTo('test-id');
-    // Test implementation
-  });
+export class QuestionsOverviewComponent {
+  readonly page: Page;
+  readonly container: Locator;
+  readonly questionTypeHeader: Locator;
+  readonly difficultyLevelHeader: Locator;
+  readonly questionTypeRow: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.container = page.locator('section[aria-label="Questions Overview"]');
+    this.questionTypeHeader = this.container.getByRole('columnheader', { name: 'Question type' });
+    this.difficultyLevelHeader = this.container.getByRole('columnheader', { name: 'Difficulty level' });
+    this.questionTypeRow = this.container.getByRole('row').filter({ hasText: 'SQL' });
+  }
+
+  async getQuestionCount(): Promise<string> {
+    const questionsElement = this.container.getByText(/Questions/);
+    return await questionsElement.textContent() || '';
+  }
+}
+```
+
+## Fixture Implementation Example
+
+```typescript
+// tests/recruiter/assessment/fixtures.ts
+import { test as base } from "utils/base-fixtures.js";
+import { AssessmentOverviewPage } from "pages/recruiter/assessment/overview/AssessmentOverviewPage.js";
+
+// Define the type for our custom fixtures
+type CustomFixtures = {
+    assessmentOverviewPage: AssessmentOverviewPage;
+};
+
+/**
+ * Extended test fixtures with assessment pages
+ */
+export const test = base.extend<CustomFixtures>({
+    assessmentOverviewPage: async ({ page }, use) => {
+        await use(new AssessmentOverviewPage(page));
+    }
 });
+
+export { expect } from "@playwright/test";
 ```
 
 ## TypeScript Configuration

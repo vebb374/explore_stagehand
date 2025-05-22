@@ -1,0 +1,522 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Playwright Test Organization and Best Practices
+
+This rule provides comprehensive guidance on how to organize, structure, and write effective Playwright tests.
+
+## Test File Structure
+
+Each test file should follow this general structure:
+
+```typescript
+// 1. Import fixtures from the closest fixtures.ts file
+import { test, expect } from "./fixtures.js";
+import { getCompanyData } from "utils/company-data.js";
+// Import other utilities as needed
+
+// 2. Test suite description (optional tags in description)
+test.describe("Assessment API Tests", () => {
+    // 3. Setup hooks
+    test.beforeEach(async ({ apiClient }) => {
+        // Login before each test
+        const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_32");
+        await apiClient.auth.login(ADMIN, PASSWORD);
+    });
+
+    // 4. Individual tests with clear names
+    test("should create a new blank test", async ({ apiClient, addTestForCleanup }) => {
+        // Test implementation following AAA pattern
+        
+        // Arrange
+        const testName = `API Test ${Date.now()}`;
+        
+        // Act
+        const response = await apiClient.assessment.createNewBlankTest(testName);
+        
+        // Assert
+        expect(response.ok()).toBeTruthy();
+        const data = await response.json();
+        const eventSlug = data.eventUrl.split("/")[2];
+        
+        // Cleanup registration
+        addTestForCleanup(eventSlug);
+    });
+    
+    // Additional tests...
+});
+```
+
+## Test Structure Pattern: AAA
+
+Always follow the Arrange-Act-Assert pattern:
+
+```typescript
+test('should submit form successfully', async ({ contactPage }) => {
+  // Arrange - setup the test
+  await contactPage.navigateTo();
+  
+  // Act - perform the action
+  await contactPage.fillContactForm('John Doe', 'john@example.com');
+  await contactPage.submitForm();
+  
+  // Assert - verify the outcome
+  await expect(contactPage.successMessage).toBeVisible();
+});
+```
+
+## Fixture-Based Testing
+
+1. **Use Fixtures for Page Objects, API Clients, and Test Data**:
+   - Each test group should have its own `fixtures.ts` file
+   - Access page objects, API clients, and test data through fixtures
+   - Extend base fixtures with test-specific fixtures
+
+   ```typescript
+   // tests/recruiter/assessment/fixtures.ts
+   import { test as base } from "utils/base-fixtures.js";
+   import { AssessmentPage } from "pages/recruiter/assessment/AssessmentPage.js";
+   import { ApiClient } from "utils/api/api-client.js";
+
+   export const test = base.extend<{
+     assessmentPage: AssessmentPage;
+     currentSessionApiClient: ApiClient;
+     IsolatedAPIClient: ApiClient;
+   }>({
+     assessmentPage: async ({ page }, use) => {
+       await use(new AssessmentPage(page));
+     },
+     currentSessionApiClient: async ({ context }, use) => {
+       const client = new ApiClient(context.request, "CurrentSession");
+       await use(client);
+       await context.request.dispose();
+     },
+     IsolatedAPIClient: async ({ request }, use) => {
+       const client = new ApiClient(request, "IsolatedAPI");
+       await use(client);
+       await request.dispose();
+     },
+   });
+
+   export { expect } from "@playwright/test";
+   ```
+
+2. **Import Fixtures in Test Files**:
+   ```typescript
+   // tests/recruiter/assessment/overview.spec.ts
+   import { test, expect } from './fixtures';
+   
+   test('should display assessment details', async ({ assessmentPage }) => {
+     // Test implementation using the fixture
+   });
+   ```
+
+## Fixture Organization
+
+1. **Base Fixtures**: Common fixtures used across the application
+   - Location: `utils/base-fixtures.ts`
+   - Example: `getUniqueCandidateCredentials`
+
+2. **Test Group Fixtures**: Specific to a test group/folder
+   - Location: `tests/[user-type]/[feature]/fixtures.ts`
+   - Example: Assessment-specific page objects and data
+
+3. **Test File Imports**: Always import from the closest fixture file
+   - Import from: `./fixtures` (in the same directory)
+
+## Custom Test Data Tracking
+
+Use the TestInfo object to track test data that needs cleanup:
+
+```typescript
+// Define custom properties for TestInfo
+interface TestCleanupInfo {
+    slug: string;
+    recruiterEmail?: string;
+    recruiterPassword?: string;
+}
+
+// Extend TestInfo to include our custom property for test cleanup
+declare module "@playwright/test" {
+    interface TestInfo {
+        testsToCleanup?: TestCleanupInfo[];
+    }
+}
+
+// Create a fixture to add tests for cleanup
+type ApiFixtures = {
+    addTestForCleanup: (slug: string, recruiterEmail?: string, recruiterPassword?: string) => void;
+};
+
+export const test = base.extend<ApiFixtures>({
+    // Helper to add a test for cleanup
+    addTestForCleanup: async ({}, use, testInfo) => {
+        // Initialize testsToCleanup array if it doesn't exist
+        if (!testInfo.testsToCleanup) {
+            testInfo.testsToCleanup = [];
+        }
+
+        const addTest = (slug: string, recruiterEmail?: string, recruiterPassword?: string) => {
+            if (testInfo.testsToCleanup) {
+                testInfo.testsToCleanup.push({
+                    slug,
+                    recruiterEmail,
+                    recruiterPassword,
+                });
+            }
+        };
+
+        await use(addTest);
+    },
+});
+```
+
+## Test Lifecycle Hooks
+
+Use `test.beforeEach` and `test.afterEach` hooks for consistent setup and cleanup:
+
+```typescript
+// Login before each test
+test.beforeEach(async ({ apiClient }) => {
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_32");
+    await apiClient.auth.login(ADMIN, PASSWORD);
+});
+
+// Clean up tests after each test
+test.afterEach(async ({ apiClient }, testInfo) => {
+    // Get the tests to clean up from test info
+    const testsToCleanup = testInfo.testsToCleanup || [];
+
+    // Delete each test with appropriate credentials
+    for (const testInfo of testsToCleanup) {
+        try {
+            // If test has specific recruiter credentials, login as that recruiter
+            if (testInfo.recruiterEmail && testInfo.recruiterPassword) {
+                await apiClient.auth.login(testInfo.recruiterEmail, testInfo.recruiterPassword);
+            }
+
+            // Delete the test
+            await apiClient.assessment.deleteTest(testInfo.slug);
+            console.log(`Cleaned up test: ${testInfo.slug}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`Failed to delete test ${testInfo.slug}: ${errorMessage}`);
+        }
+    }
+});
+```
+
+## Test File Organization
+
+Organize test files based on the feature they're testing:
+
+```
+tests/
+  ├── recruiter/                   # User type
+  │   ├── api/                     # API tests
+  │   │   ├── fixtures.ts          # API test fixtures
+  │   │   ├── assessment.spec.ts   # Assessment API tests
+  │   │   └── library.spec.ts      # Library API tests
+  │   ├── assessment/              # UI tests for assessment feature
+  │   │   ├── fixtures.ts          # Assessment fixtures
+  │   │   ├── overview.spec.ts     # Assessment overview tests
+  │   │   └── creation.spec.ts     # Assessment creation tests
+  │   └── login/                   # Login tests
+  │       ├── fixtures.ts          # Login fixtures
+  │       └── login.spec.ts        # Login tests
+  └── candidate/                   # Another user type
+      └── ...
+```
+
+## Test Naming Conventions
+
+1. **Test File Names**: Use kebab-case for test files: `assessment-overview.spec.ts`
+2. **Test Suite Names**: Use descriptive names for test suites: `test.describe("Assessment Overview")`
+3. **Test Names**: Start with "should" and describe the expected behavior: `test("should create a new blank test")`
+4. **Test Tags**: Use `@` prefix for tags in test suite or test descriptions:
+   ```typescript
+   test.describe("@api Assessment API Tests", () => {
+     test("@smoke should create a new blank test", async ({ apiClient }) => {
+       // Test implementation
+     });
+   });
+   ```
+
+## Waiting Strategies
+
+1. **Avoid Arbitrary Waits**
+   ```typescript
+   // BAD
+   await page.waitForTimeout(5000); // Arbitrary delay
+   
+   // GOOD
+   await page.waitForLoadState('domcontentloaded');
+   await page.waitForResponse(res => res.url().includes('/api/data') && res.status() === 200);
+   await expect(page.getByRole('heading')).toBeVisible();
+   ```
+
+2. **Create Helper Functions for Common Wait Patterns**
+   ```typescript
+   // utils/wait-helpers.ts
+   export async function waitForApiResponse(page: Page, urlPattern: string, statusCode = 200): Promise<void> {
+     await page.waitForResponse(
+       (res) => res.url().includes(urlPattern) && res.status() === statusCode
+     );
+   }
+   ```
+
+## Avoid Conditionals in Tests
+
+Tests should be deterministic. If you need conditional logic, it usually means you should create separate test cases.
+
+```typescript
+// BAD
+test('conditional test', async ({ loginPage }) => {
+  if (await loginPage.welcomeMessage.isVisible()) {
+    // test something
+  } else {
+    // test something else
+  }
+});
+
+// GOOD - Split into separate tests
+test('when welcome message is visible', async ({ loginPage }) => {
+  await expect(loginPage.welcomeMessage).toBeVisible();
+  // test specific behavior
+});
+
+test('when welcome message is not visible', async ({ loginPage }) => {
+  await expect(loginPage.welcomeMessage).not.toBeVisible();
+  // test different behavior
+});
+```
+
+## Step Annotations
+
+The `@step()` decorator improves test visualization and debugging in Playwright traces.
+
+### When to Use Step Annotations
+
+1. **Use `@step()` only for complex functions** that contain multiple Playwright actions
+   - Functions with 3+ Playwright interactions are good candidates
+   - Simple one-line functions generally don't need step annotations
+
+2. **Add step annotations when the function:**
+   - Contains a logical sequence of related actions
+   - Performs a complete user flow
+   - Is frequently used across tests
+   - Would benefit from visual grouping in the UI mode
+
+3. **Avoid over-using step annotations** which can make the trace view cluttered
+
+### Step Description Guidelines
+
+1. **Default behavior:** When used without parameters, `@step()` will use the function name
+   ```typescript
+   @step()
+   async loginAsRecruiter(email: string, password: string) {
+       // Multiple actions...
+   }
+   ```
+
+2. **Add descriptions for clarity** when the function name might be confusing:
+   ```typescript
+   @step('Navigate to assessment overview page and wait for it to load')
+   async navigateToAssessment(assessmentId: string) {
+       // Implementation...
+   }
+   ```
+
+3. **Use appropriate descriptions that:**
+   - Are concise but descriptive (5-10 words)
+   - Describe the high-level action being performed
+   - Use active voice (e.g., "Navigate to..." instead of "Navigating to...")
+
+### Example Usage
+
+**Good examples:**
+```typescript
+// Complex function with multiple steps - needs @step()
+@step()
+async addCandidate(email: string, firstName?: string, lastName?: string) {
+    await this.emailInput.fill(email);
+    if (firstName) await this.firstNameInput.fill(firstName);
+    if (lastName) await this.lastNameInput.fill(lastName);
+    await this.addCandidateButton.click();
+    await this.page.waitForSelector('.candidate-row');
+}
+
+// Function with potentially confusing name - use description
+@step('Search for a candidate and wait for results')
+async findCandidate(searchTerm: string) {
+    await this.searchInput.fill(searchTerm);
+    await this.searchButton.click();
+    await this.page.waitForSelector('.search-results');
+}
+```
+
+**Not needed:**
+```typescript
+// Simple one-line functions don't need @step()
+async closeModal() {
+    await this.closeButton.click();
+}
+
+// Getter methods don't need @step()
+async getSelectedDate(): Promise<string> {
+    return await this.dateInput.inputValue();
+}
+```
+
+## API Testing Best Practices
+
+1. **Separate API Test Files**:
+   - Keep pure API tests in their own files/folders
+   - Example: `tests/recruiter/api/assessments.spec.ts`
+
+2. **API Client Usage**:
+   - For pure API tests, use the `apiClient` fixture
+   - For UI tests with API support, use the appropriate client:
+     - `currentSessionApiClient`: When you need the same session as the browser
+     - `IsolatedAPIClient`: When you need a separate session
+
+3. **API Test Structure**:
+   ```typescript
+   // tests/recruiter/api/sample.spec.ts
+   import { test, expect } from "./fixtures.js";
+
+   test.describe("Recruiter API Tests", () => {
+     test("should login and fetch data", async ({ apiClient }) => {
+       // Login
+       await apiClient.auth.login("email@example.com", "password");
+       
+       // Make API call
+       const response = await apiClient.request.get("/some/endpoint");
+       
+       // Assert response
+       expect(response.ok()).toBe(true);
+       expect(response.status()).toBe(200);
+     });
+   });
+   ```
+
+4. **Hybrid UI/API Tests**:
+   ```typescript
+   test("should use API and UI together", async ({ 
+     page, 
+     currentSessionApiClient, 
+     assessmentOverviewPage 
+   }) => {
+     // UI login
+     await page.goto("/login");
+     // ...login steps...
+     
+     // API data setup using same session
+     const apiResponse = await currentSessionApiClient.request.post("/create-data");
+     const { id } = await apiResponse.json();
+     
+     // Continue with UI test using created data
+     await assessmentOverviewPage.navigateTo(id);
+   });
+   ```
+
+## Handling Flaky Tests
+
+1. **Fix Flaky Tests Immediately**: Make this a priority
+2. **Mark Unfixable Tests**: If a test cannot be immediately fixed, mark it with `.fixme`
+
+```typescript
+test.fixme('flaky test that needs fixing', async ({ loginPage }) => {
+  // This test will be skipped until fixed
+});
+```
+
+## Test Documentation
+
+Add descriptive comments for complex test scenarios:
+
+```typescript
+test("should reset test for all candidates", async ({ apiClient, addTestForCleanup }) => {
+    // Create a test with unique candidates
+    const testName = `API Test ${Date.now()}`;
+    const createResponse = await apiClient.assessment.createNewBlankTest(testName);
+    const createData = await createResponse.json();
+    const eventSlug = createData.eventUrl.split("/")[2];
+    
+    // Register for cleanup
+    addTestForCleanup(eventSlug);
+    
+    // Get event details
+    const eventDetails = await apiClient.assessment.getEventDetails(eventSlug);
+    
+    // Create unique candidate emails to avoid conflicts with other tests
+    const timestamp = Date.now();
+    const candidates = [
+        {
+            email: `test.candidate1.${timestamp}@example.com`,
+            first_name: "Test",
+            last_name: "Candidate1",
+        },
+        {
+            email: `test.candidate2.${timestamp}@example.com`,
+            first_name: "Test",
+            last_name: "Candidate2",
+        },
+    ];
+    
+    // Prepare and publish the test
+    await apiClient.questions.addQuestionsToTestFromLibrary(
+        QuestionTypesEnum.MCQ,
+        eventDetails.id,
+        ["1967"]
+    );
+    await apiClient.assessment.waitTillTestCanBePublished(eventDetails.id);
+    await apiClient.assessment.publishTest(eventSlug);
+    
+    // Invite candidates
+    await apiClient.assessment.inviteCandidatesToTest(eventSlug, candidates);
+    
+    // Test the reset functionality
+    const resetResponse = await apiClient.assessment.resetTestForAllCandidates(eventSlug);
+    expect(resetResponse.ok()).toBeTruthy();
+});
+```
+
+## Best Practices Summary
+
+1. **One Assertion Per Test**
+   Focus each test on verifying one specific behavior. Multiple assertions are acceptable only if they're checking the same logical behavior.
+
+2. **Assert using Page Object elements**
+   ```typescript
+   // Use page object elements in assertions
+   await expect(assessmentPage.element1).toBeVisible();
+   await expect(assessmentPage.element2).toHaveText('Expected text');
+   ```
+
+3. **Keep Tests Focused**
+   - Test one specific behavior per test
+   - Split complex scenarios into multiple tests
+
+4. **Descriptive Assertion Messages**
+   - Include context in assertions to make failures clear:
+     ```typescript
+     expect(response.ok(), `API request failed with status ${response.status()}`).toBeTruthy();
+     ```
+
+5. **Avoid Test Interdependence**
+   - Don't create tests that depend on each other
+   - Each test should stand alone and be runnable in isolation
+
+6. **Test Tagging Strategy**
+   - `@smoke`: Essential functionality tests
+   - `@api`: API-specific tests
+   - `@ui`: UI-specific tests
+   - `@functional`: Feature functionality tests
+
+7. **Handle Flakiness**
+   - Identify and fix flaky tests immediately
+   - Mark consistently flaky tests with `.fixme` until fixed
+   - Consider using retry strategies for inherently flaky scenarios

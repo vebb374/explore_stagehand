@@ -1,0 +1,405 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Playwright API Testing and Services
+
+This rule provides comprehensive guidance on structuring and using API services for testing in our Playwright framework.
+
+## API Client Architecture
+
+The API client architecture follows a modular approach:
+
+```
+utils/api/
+  ├── api-client.ts           # Main client class that aggregates all services
+  ├── token-manager.ts        # Manages CSRF tokens for authenticated requests
+  ├── logger.ts               # Logging utility for API calls
+  └── services/               # Individual API domain services
+      ├── base-service.ts     # Base service with common HTTP methods
+      ├── auth.ts             # Authentication service
+      ├── assessment.ts       # Assessment management service
+      ├── library.ts          # Library-related operations
+      ├── questions.ts        # Question management service
+      └── [other-services].ts # Other domain-specific services
+```
+
+## API Service Implementation
+
+When creating a new API service:
+
+1. **Create a new file** in `utils/api/services/` named after the domain
+2. **Extend BaseApiService** to inherit common functionality
+3. **Define service-specific endpoints** as private constants
+4. **Implement service methods** for API operations
+5. **Register the service** in the ApiClient class
+
+Example of an API service:
+
+```typescript
+// utils/api/services/questions.ts
+import { APIRequestContext, APIResponse } from "@playwright/test";
+import { Logger } from "../logger.js";
+import { TokenManager } from "../token-manager.js";
+import { BaseApiService } from "./base-service.js";
+import { QuestionTypesEnum } from "utils/constants.js";
+
+export class QuestionsApi extends BaseApiService {
+    private readonly ADD_FROM_LIBRARY_URI = (questionType: string, eventId: string) =>
+        `recruiter/AJAX/add-from-library/${questionType}/${eventId}/`;
+
+    constructor(request: APIRequestContext, logger: Logger, tokenManager: TokenManager) {
+        super(request, logger, tokenManager);
+    }
+
+    async addQuestionsToTestFromLibrary(
+        questionType: QuestionTypesEnum,
+        eventId: string,
+        questionIds: string[]
+    ): Promise<APIResponse> {
+        this.logger.info(
+            `Adding questions of type ${questionType} to test ${eventId}: ${questionIds.join(", ")}`
+        );
+
+        const payload = {
+            ids: questionIds.join(","),
+        };
+
+        const response = await this.post(this.ADD_FROM_LIBRARY_URI(questionType, eventId), {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Referer: `${this.baseURL}/recruiter/library-listing/problems/`,
+            },
+            form: payload,
+        });
+
+        if (!response.ok()) {
+            const responseBody = await response.text();
+            throw new Error(
+                `Failed to add questions to test: ${response.status()} - ${response.statusText()} - Body: ${responseBody}`
+            );
+        }
+
+        return response;
+    }
+}
+```
+
+## Adding a Service to ApiClient
+
+Register your new service in the ApiClient class:
+
+```typescript
+// utils/api/api-client.ts
+import { APIRequestContext } from "@playwright/test";
+import { AuthApi } from "./services/auth.js";
+import { LibraryApi } from "./services/library.js";
+import { AssessmentApi } from "./services/assessment.js";
+import { QuestionsApi } from "./services/questions.js";  // Import new service
+import { Logger } from "./logger.js";
+import { TokenManager } from "./token-manager.js";
+
+export class ApiClient {
+    readonly auth: AuthApi;
+    readonly library: LibraryApi;
+    readonly assessment: AssessmentApi;
+    readonly questions: QuestionsApi;  // Add new service property
+    readonly request: APIRequestContext;
+    readonly logger: Logger;
+    readonly tokenManager: TokenManager;
+
+    constructor(request: APIRequestContext, clientType: string = "") {
+        this.request = request;
+        this.logger = new Logger({ clientType });
+        this.tokenManager = new TokenManager(this.logger);
+        
+        this.auth = new AuthApi(request, this.logger, this.tokenManager);
+        this.library = new LibraryApi(request, this.logger, this.tokenManager);
+        this.assessment = new AssessmentApi(request, this.logger, this.tokenManager);
+        this.questions = new QuestionsApi(request, this.logger, this.tokenManager);  // Initialize
+    }
+}
+```
+
+## API Client Types in Tests
+
+There are three types of API clients available in fixtures:
+
+1. **currentSessionApiClient**: Uses the current browser session context
+   - Use when tests need to make API calls in the same session as the browser
+   - Useful for hybrid UI/API tests
+
+2. **IsolatedAPIClient**: Independent API client
+   - Use for pure API tests or when you need an isolated session
+   - Clean state, not sharing cookies with the browser
+
+3. **IsolatedAPIClient2**: Second independent API client
+   - Used when you need multiple isolated API clients in a single test
+   - Useful for testing multiple user scenarios
+
+## API Client Usage in Test Fixtures
+
+API clients are provided through fixtures:
+
+```typescript
+// tests/recruiter/api/fixtures.ts
+import { test as base } from "utils/base-fixtures.js";
+import { ApiClient } from "utils/api/api-client.js";
+
+type ApiFixtures = {
+    apiClient: ApiClient;
+    addTestForCleanup: (slug: string, recruiterEmail?: string, recruiterPassword?: string) => void;
+};
+
+export const test = base.extend<ApiFixtures>({
+    apiClient: async ({ request }, use) => {
+        const client = new ApiClient(request, "ApiTest");
+        await use(client);
+    },
+    
+    // Helper to track tests for cleanup
+    addTestForCleanup: async ({}, use, testInfo) => {
+        if (!testInfo.testsToCleanup) {
+            testInfo.testsToCleanup = [];
+        }
+
+        const addTest = (slug: string, recruiterEmail?: string, recruiterPassword?: string) => {
+            if (testInfo.testsToCleanup) {
+                testInfo.testsToCleanup.push({
+                    slug,
+                    recruiterEmail,
+                    recruiterPassword,
+                });
+            }
+        };
+
+        await use(addTest);
+    },
+});
+```
+
+## Test Cleanup
+
+Always clean up test data after tests, especially when creating assessments:
+
+```typescript
+// Clean up tests after each test
+test.afterEach(async ({ apiClient }, testInfo) => {
+    const testsToCleanup = testInfo.testsToCleanup || [];
+
+    for (const testInfo of testsToCleanup) {
+        try {
+            // If test has specific recruiter credentials, login as that recruiter
+            if (testInfo.recruiterEmail && testInfo.recruiterPassword) {
+                await apiClient.auth.login(testInfo.recruiterEmail, testInfo.recruiterPassword);
+            }
+
+            // Delete the test
+            await apiClient.assessment.deleteTest(testInfo.slug);
+            console.log(`Cleaned up test: ${testInfo.slug}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`Failed to delete test ${testInfo.slug}: ${errorMessage}`);
+        }
+    }
+});
+```
+
+## Using API Services in Tests
+
+```typescript
+test("should add MCQ question and publish test", async ({ apiClient, addTestForCleanup }) => {
+    // Create a test with a unique name
+    const testName = `MCQ Test ${Date.now()}`;
+    const createResponse = await apiClient.assessment.createNewBlankTest(testName);
+    const createData = await createResponse.json();
+    const eventSlug = createData.eventUrl.split("/")[2];
+
+    // Add to cleanup list with specific recruiter credentials
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
+    addTestForCleanup(eventSlug, ADMIN, PASSWORD);
+
+    // Get event details
+    const eventDetails = await apiClient.assessment.getEventDetails(eventSlug);
+
+    // Add MCQ question with ID "1967" to the test
+    const addQuestionResponse = await apiClient.questions.addQuestionsToTestFromLibrary(
+        QuestionTypesEnum.MCQ,
+        eventDetails.id,
+        ["1967"]
+    );
+
+    // Verify question was added successfully
+    expect(addQuestionResponse.ok()).toBeTruthy();
+
+    // Wait until test can be published
+    const timeToPublish = await apiClient.assessment.waitTillTestCanBePublished(
+        eventDetails.id
+    );
+    expect(timeToPublish).not.toBe(-1);
+
+    // Publish the test
+    const publishResponse = await apiClient.assessment.publishTest(eventSlug);
+    expect(publishResponse.ok()).toBeTruthy();
+});
+```
+
+## Pure API Tests vs. UI Tests with API Support
+
+### In Pure API Tests
+
+```typescript
+// tests/recruiter/api/assessment.spec.ts
+import { test, expect } from "./fixtures.js";
+
+test("should fetch assessments via API", async ({ apiClient }) => {
+    // Login
+    await apiClient.auth.login("admin@example.com", "password");
+    
+    // Call API method
+    const response = await apiClient.assessment.getAssessments();
+    
+    // Assert on response
+    expect(response.ok()).toBe(true);
+    const data = await response.json();
+    expect(data.items).toBeDefined();
+});
+```
+
+### In UI Tests with API Support
+
+```typescript
+// tests/recruiter/assessment/overview.spec.ts
+import { test, expect } from "./fixtures.js";
+import { getCompanyData } from "utils";
+
+test("should display assessment created via API", async ({ 
+    assessmentOverviewPage, 
+    IsolatedAPIClient, 
+    page 
+}) => {
+    // 1. Setup data via API
+    const { ADMIN, PASSWORD } = getCompanyData("qa_test_company_15");
+    await IsolatedAPIClient.auth.login(ADMIN, PASSWORD);
+    
+    // Create assessment via API
+    const createResponse = await IsolatedAPIClient.assessment.createAssessment({
+        name: "Test Assessment",
+        description: "Created via API"
+    });
+    expect(createResponse.ok()).toBe(true);
+    const { id } = await createResponse.json();
+    
+    // 2. Login in the UI
+    await page.goto("/recruiter/login");
+    // Login handled by the page fixture
+    
+    // 3. Navigate to the created assessment and verify
+    await assessmentOverviewPage.navigateTo(id);
+    await expect(assessmentOverviewPage.pageTitle).toBeVisible();
+});
+```
+
+### Using Current Session API Client
+
+```typescript
+test("should use API in current browser session", async ({ 
+    page, 
+    currentSessionApiClient 
+}) => {
+    // Login via UI
+    await page.goto("/recruiter/login");
+    await page.getByLabel("Email").fill("admin@example.com");
+    await page.getByLabel("Password").fill("password");
+    await page.getByRole("button", { name: "Login" }).click();
+    
+    // User is now logged in, use the same session for API calls
+    const response = await currentSessionApiClient.assessment.getAssessments();
+    expect(response.ok()).toBe(true);
+    
+    // Use the API response data in UI verification
+    const data = await response.json();
+    const firstAssessmentId = data.items[0].id;
+    
+    // Navigate to the first assessment
+    await page.goto(`/recruiter/assessment/${firstAssessmentId}`);
+    // Verify some UI element
+});
+```
+
+## Hybrid UI/API Tests
+
+```typescript
+test("should use API and UI together", async ({ 
+  page, 
+  currentSessionApiClient, 
+  assessmentOverviewPage 
+}) => {
+  // UI login
+  await page.goto("/login");
+  // ...login steps...
+  
+  // API data setup using same session
+  const apiResponse = await currentSessionApiClient.request.post("/create-data");
+  const { id } = await apiResponse.json();
+  
+  // Continue with UI test using created data
+  await assessmentOverviewPage.navigateTo(id);
+});
+```
+
+## API Test Structure
+
+```typescript
+// tests/recruiter/api/sample.spec.ts
+import { test, expect } from "./fixtures.js";
+
+test.describe("Recruiter API Tests", () => {
+  test("should login and fetch data", async ({ apiClient }) => {
+    // Login
+    await apiClient.auth.login("email@example.com", "password");
+    
+    // Make API call
+    const response = await apiClient.request.get("/some/endpoint");
+    
+    // Assert response
+    expect(response.ok()).toBe(true);
+    expect(response.status()).toBe(200);
+  });
+});
+```
+
+## Best Practices
+
+1. **Organize by Domain**
+   - Group related API operations in domain-specific service classes
+   - Use descriptive method names that reflect the business operation
+
+2. **Error Handling**
+   - Always check response status and throw meaningful errors
+   - Include response body in error messages for easier debugging
+
+3. **Logging**
+   - Use the logger to record API operations
+   - Log at different levels (info, error, debug) as appropriate
+
+4. **Test Data Cleanup**
+   - Always clean up test data after tests complete
+   - Use the `addTestForCleanup` helper to track tests that need cleanup
+
+5. **Authentication**
+   - Properly authenticate before making API calls
+   - Handle credential switching for different test scenarios
+
+6. **Use API for Test Data Setup**
+   - Create test data via API before UI tests when possible
+   - Clean up test data via API after tests
+
+7. **Handle Authentication Properly**
+   - Always login before making API calls
+   - For `currentSessionApiClient`, ensure UI login has completed
+
+8. **Prefer UI Tests for User Flows**
+   - Use API tests for backend validation and data setup
+   - Use UI tests for user-facing functionality

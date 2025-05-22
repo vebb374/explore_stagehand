@@ -1,40 +1,144 @@
 ---
-description: when creating .ts files
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Playwright Naming Conventions
+# Playwright Selector Strategies and Naming Conventions
 
-This rule provides guidance on naming conventions for Playwright test files, page objects, methods, and locators.
+This rule provides comprehensive guidance on creating robust selectors and following consistent naming conventions in our Playwright testing framework.
 
-## File Naming
+## Selector Priority
+
+When creating selectors, use the following priority order:
+
+1. **Accessibility attributes** (preferred)
+   - Role: `page.getByRole('button', { name: 'Invite candidates' })`
+   - Label: `page.getByLabel('Email')`
+   - Text: `page.getByText('You can only add 3 more candidates')`
+
+2. **Test attributes** (when accessibility attributes are not available)
+   - Data attributes: `page.locator('[data-testid="invite-button"]')`
+   - ARIA attributes: `page.locator('[aria-label="Close modal"]')`
+
+3. **CSS selectors** (use when options 1 and 2 aren't available)
+   - Class: `page.locator('.react-datepicker__day')`
+   - Combination: `page.locator('.modal-header .close-button')`
+
+4. **XPath** (last resort, use only when necessary)
+   - `page.locator('//div[contains(@class,"test-title")]')`
+
+## Selector Best Practices
+
+1. **Be specific but flexible**
+   - Too specific: `page.locator('.form-row:nth-child(2) input')` (breaks if structure changes)
+   - Better: `page.getByRole('textbox', { name: 'Email' })`
+
+2. **Filter when needed**
+   - Use `filter()` to narrow down selection: 
+     ```typescript
+     page.locator('button').filter({ hasText: 'Invite' })
+     ```
+
+3. **Combine selectors for robustness**
+   - Use `and()` or multiple filters:
+     ```typescript
+     page.getByRole('button').and(page.getByText('Submit'))
+     ```
+
+4. **Use context when needed**
+   - Scope selectors to parent elements:
+     ```typescript
+     const modal = page.locator('.modal');
+     const submitButton = modal.getByRole('button', { name: 'Submit' });
+     ```
+
+5. **Avoid selectors based on position**
+   - Avoid: `page.locator('tr').nth(2)` (breaks if order changes)
+   - Better: `page.locator('tr').filter({ hasText: 'expectedText' })`
+
+## Examples from the Codebase
+
+```typescript
+// Good: Using role selectors
+this.emailInput = page.getByRole('textbox', { name: 'olivia@gmail.com' });
+this.addCandidateButton = page.getByRole('button', { name: 'Add candidate' });
+
+// Good: Filtering by text
+this.candidatesTable = page.locator('table').filter({ hasText: /Email/ });
+
+// Good: Combining multiple attributes
+this.inviteCandidatesButton = page.getByRole('button', {
+    name: 'Invite candidates',
+    exact: true,
+});
+
+// When needed: XPath for complex structures
+this.closeModalButton = page.locator(
+    '//div[contains(@class,"ql-flyout-main")]/button[@class="close-btn"]'
+);
+```
+
+## Locating Elements Within Components
+
+When working with components, define all locators relative to the component's container to ensure proper scoping:
+
+```typescript
+export class QuestionTableComponent {
+  readonly container: Locator;
+  readonly questionTypeHeader: Locator;
+  readonly difficultyLevelCell: Locator;
+  
+  constructor(page: Page) {
+    this.container = page.locator('[data-testid="question-table"]');
+    this.questionTypeHeader = this.container.getByRole('columnheader', { name: 'Question type' });
+    this.difficultyLevelCell = this.container.getByRole('cell', { name: 'Easy' });
+  }
+}
+```
+
+## When to Use Test IDs
+
+Only use test IDs as a last resort, when elements cannot be selected using more semantic methods:
+
+```typescript
+// Only when necessary - Using data-testid
+export class SpecialComponent {
+  readonly container: Locator;
+  
+  constructor(page: Page) {
+    this.container = page.getByTestId('special-container');
+  }
+}
+```
+
+## File Naming Conventions
 
 1. Use kebab-case for file names: `assessment-overview-page.ts`, `invite-candidates-modal.ts`
 2. Use descriptive names that indicate the file's purpose
 3. Page object files should end with `-page.ts` or specify their component type (e.g., `-modal.ts`, `-component.ts`)
 4. Test files should end with `.spec.ts`
 
-## Class Naming
+## Class Naming Conventions
 
 1. Use PascalCase for class names: `AssessmentOverviewPage`, `InviteCandidatesModal`
 2. Page objects should be named after the page they represent
 3. Component classes should include their component type in the name: `DatePicker`, `TopNavbarComponent`
 
-## Method Naming
+## Method Naming Conventions
 
 1. Use camelCase for method names: `addCandidate()`, `selectDate()`
 2. Use verb phrases that describe the action: `click...`, `select...`, `fill...`, `get...`, `waitFor...`
 3. Step methods that represent user flows should have descriptive names: `loginAsRecruiter()`, `addCandidateWithDetails()`
 4. Boolean methods should use `is`, `has`, or `can` prefixes: `isEmailErrorVisible()`, `hasInvitationExpired()`
 
-## Locator Naming
+## Locator Naming Conventions
 
 1. Use camelCase for locator properties: `emailInput`, `addCandidateButton`
 2. Name locators after the UI element they represent
 3. Use suffix to indicate the element type: `...Input`, `...Button`, `...Link`, `...Dropdown`, `...Table`
 4. Use plurals for collections of elements: `removeButtons`, `daysCells`
 
-## Test Naming
+## Test Naming Conventions
 
 1. Use descriptive test names that clearly indicate what is being tested
 2. Start with "should": `should validate invite modal functionality and mandatory fields`
@@ -108,14 +212,7 @@ test("should validate invite modal functionality and mandatory fields", async ({
    getUniqueCandidateCredentials: { email: string; password: string };
    ```
 
-## Test Naming
-
-Tests should be named to clearly indicate what they're verifying:
-
-```typescript
-test('should display error message with invalid credentials', async () => { ... });
-test('should navigate to dashboard after successful login', async () => { ... });
-```
+## Import Conventions
 
 1. **Named exports**: Use the exact name
    ```typescript

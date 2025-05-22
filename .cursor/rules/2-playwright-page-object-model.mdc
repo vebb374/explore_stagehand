@@ -1,0 +1,342 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Playwright Page Object Model and Component Design
+
+This rule provides comprehensive guidance on implementing the Page Object Model pattern and designing effective components in our Playwright testing framework.
+
+## Page Object Model Principles
+
+1. All page interactions should be done via page objects
+2. No selectors should be in test files
+3. All assertions should be in test files, not in POM files
+4. **Always declare locators as readonly** since they will be used for assertions in tests
+5. **Access page objects through fixtures** in test files
+6. Before adding any new selectors/functions check if you can reuse existing selectors, functions
+
+## Component Structure
+
+Page objects encapsulate page behavior and provide an interface for tests:
+
+```typescript
+// pages/recruiter/assessment/overview/AssessmentOverviewPage.ts
+import { Locator, Page } from '@playwright/test';
+import { QuestionsComponent } from './components/QuestionsComponent';
+import { SettingsComponent } from './components/SettingsComponent';
+
+export class AssessmentOverviewPage {
+    // Page and key elements
+    readonly page: Page;
+    readonly pageTitle: Locator;
+    readonly assessmentName: Locator;
+    
+    // Child components
+    readonly questionsComponent: QuestionsComponent;
+    readonly settingsComponent: SettingsComponent;
+    
+    constructor(page: Page) {
+        this.page = page;
+        this.pageTitle = page.getByRole('heading', { name: 'Assessment Overview' });
+        this.assessmentName = page.getByTestId('assessment-name');
+        
+        // Initialize child components
+        this.questionsComponent = new QuestionsComponent(page);
+        this.settingsComponent = new SettingsComponent(page);
+    }
+    
+    /**
+     * Navigate to a specific assessment
+     */
+    async navigateTo(assessmentId: string): Promise<void> {
+        await this.page.goto(`/recruiter/assessment/${assessmentId}/overview`);
+    }
+    
+    /**
+     * Get assessment status text
+     */
+    async getStatus(): Promise<string | null> {
+        return this.page.getByTestId('assessment-status').textContent();
+    }
+}
+```
+
+## Principles of Component Composition
+
+1. **Direct Access over Duplication**: When a parent component contains a child component, access the child's methods directly rather than duplicating functionality.
+
+2. **Delegation Pattern**: Only create wrapper methods in the parent when they add additional functionality or improve test readability.
+
+3. **Single Responsibility**: Each component should focus on its own responsibilities and delegate specialized functionality to appropriate sub-components.
+
+### DatePicker Example
+
+The `DatePicker` component is a perfect example of a specialized component that should be accessed directly:
+
+```typescript
+// In the test:
+// GOOD ✅
+await inviteModal.datePicker.selectDate(15, 6, 2025);
+await inviteModal.datePicker.clearDate();
+
+// BAD ❌ - Unnecessary wrapper methods
+await inviteModal.setExpirationDate(15, 6, 2025);
+await inviteModal.clearExpirationDate();
+```
+
+## When to Create Wrapper Methods
+
+Create wrapper methods only when:
+
+1. They add substantial functionality beyond the child component's methods
+2. They combine multiple operations into a meaningful workflow
+3. They provide better semantic meaning in the specific context
+4. They make tests significantly more readable
+
+Example of a justified wrapper method:
+
+```typescript
+// GOOD ✅ - Combines multiple operations with context-specific logic
+async setExpirationDateNextMonth() {
+    const today = new Date();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+    
+    await this.datePicker.selectDate(
+        nextMonth.getDate(),
+        nextMonth.getMonth() + 1,
+        nextMonth.getFullYear()
+    );
+    
+    // Additional context-specific validation
+    await this.validateExpirationDate();
+}
+```
+
+## Implementation Guidelines
+
+1. **All Locators as Readonly Properties**
+   ```typescript
+   readonly submitButton: Locator;
+   readonly emailInput: Locator;
+   ```
+
+2. **Access Page Elements Through Page Objects**
+   ```typescript
+   // GOOD - Using page object methods
+   await loginPage.login(email, password);
+   
+   // BAD - Bypassing page object
+   await page.getByLabel('Email').fill(email);
+   ```
+
+3. **Expose Locators for Assertions**
+   ```typescript
+   // In test:
+   await expect(loginPage.errorMessage).toBeVisible();
+   await expect(loginPage.welcomeText).toHaveText('Welcome back!');
+   ```
+
+4. **Define Reusable Methods for Common Operations**
+   ```typescript
+   async login(email: string, password: string): Promise<void> {
+       await this.emailInput.fill(email);
+       await this.passwordInput.fill(password);
+       await this.loginButton.click();
+   }
+   ```
+
+## Component Relationships and Structure
+
+Use composition to build complex page structures:
+
+```
+AssessmentOverviewPage
+  ├── QuestionsComponent
+  ├── SettingsComponent
+  └── CandidatesComponent
+      └── InviteModal
+          
+```
+
+1. Initialize child components in the constructor:
+```typescript
+constructor(page: Page) {
+    super(page);
+    this.datePicker = new DatePicker(page, this.inviteExpirationInput);
+}
+```
+
+2. Make child components accessible via public properties:
+```typescript
+readonly datePicker: DatePicker;
+```
+
+3. Document the composition relationship in code comments:
+```typescript
+/**
+ * Modal for inviting candidates
+ * Uses DatePicker component for date selection functionality
+ */
+```
+
+## Example Implementation
+
+```typescript
+// pages/assessment/overview/AssessmentOverviewPage.ts
+import { Locator, Page } from '@playwright/test';
+import { SettingsComponent } from './components/SettingsComponent';
+import { QuestionsOverviewComponent } from './components/QuestionsOverviewComponent';
+
+export class AssessmentOverviewPage {
+  readonly page: Page;
+  readonly pageTitle: Locator;
+  readonly settings: SettingsComponent;
+  readonly questionsOverview: QuestionsOverviewComponent;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.pageTitle = page.getByRole('heading', { name: 'Overview' });
+    this.settings = new SettingsComponent(page);
+    this.questionsOverview = new QuestionsOverviewComponent(page);
+  }
+
+  async navigateTo(assessmentId: string): Promise<void> {
+    await this.page.goto(`/assessment/${assessmentId}/overview`);
+  }
+}
+
+// tests/assessment/overview.spec.ts - Using fixtures
+import { test, expect } from './fixtures';
+
+test.describe('Assessment Overview', () => {
+  test('displays assessment overview', async ({ assessmentOverviewPage }) => {
+    await assessmentOverviewPage.navigateTo('test-assessment-id');
+    
+    await expect(assessmentOverviewPage.pageTitle).toBeVisible();
+    await expect(assessmentOverviewPage.questionsOverview.questionTypeRow).toBeVisible();
+  });
+});
+```
+
+## Component Implementation Example
+
+```typescript
+// pages/recruiter/assessment/overview/components/QuestionsComponent.ts
+import { Locator, Page } from '@playwright/test';
+
+export class QuestionsComponent {
+    readonly page: Page;
+    readonly container: Locator;
+    readonly addQuestionButton: Locator;
+    readonly questionsList: Locator;
+    readonly questionsCount: Locator;
+    
+    constructor(page: Page) {
+        this.page = page;
+        this.container = page.getByTestId('questions-section');
+        this.addQuestionButton = this.container.getByRole('button', { name: 'Add Question' });
+        this.questionsList = this.container.locator('.questions-list');
+        this.questionsCount = this.container.getByTestId('questions-count');
+    }
+    
+    /**
+     * Add a question from the library
+     */
+    async addQuestionFromLibrary(questionType: string): Promise<void> {
+        await this.addQuestionButton.click();
+        await this.page.getByRole('button', { name: 'From Library' }).click();
+        await this.page.getByRole('tab', { name: questionType }).click();
+        // Select first question
+        await this.page.locator('.question-item').first().click();
+        await this.page.getByRole('button', { name: 'Add Selected' }).click();
+    }
+    
+    /**
+     * Get the current number of questions
+     */
+    async getQuestionsCount(): Promise<number> {
+        const countText = await this.questionsCount.textContent();
+        if (!countText) return 0;
+        return parseInt(countText.match(/\d+/)?.[0] || '0', 10);
+    }
+}
+```
+
+## Good vs. Bad Practices
+
+### Good: Direct Access to Child Component Methods
+
+```typescript
+// In test:
+await assessmentPage.questionsComponent.addQuestionFromLibrary('MCQ');
+await expect(assessmentPage.questionsComponent.questionsList).toBeVisible();
+```
+
+### Good: Justified Wrapper Method
+
+```typescript
+// Wrapper that adds value by combining operations
+async publishWithQuestions(questionType: string, count: number): Promise<void> {
+    // Add required questions
+    for (let i = 0; i < count; i++) {
+        await this.questionsComponent.addQuestionFromLibrary(questionType);
+    }
+    
+    // Validate questions were added
+    const questionCount = await this.questionsComponent.getQuestionsCount();
+    if (questionCount < count) {
+        throw new Error(`Failed to add all questions. Expected: ${count}, Actual: ${questionCount}`);
+    }
+    
+    // Publish the test
+    await this.publishButton.click();
+    await this.page.getByRole('button', { name: 'Confirm' }).click();
+}
+```
+
+### Bad: Unnecessary Wrapper Methods
+
+```typescript
+// BAD: Unnecessary duplication of child component functionality
+async addQuestionFromLibrary(questionType: string): Promise<void> {
+    // Just delegates to child without adding value
+    await this.questionsComponent.addQuestionFromLibrary(questionType);
+}
+```
+
+## Best Practices
+
+1. **Proper Scoping**
+   - Scope component selectors to their container
+   ```typescript
+   this.container = page.getByTestId('questions-section');
+   this.addButton = this.container.getByRole('button', { name: 'Add' });
+   ```
+
+2. **Meaningful Method Names**
+   - Use descriptive verb phrases: `loginAsAdmin()`, `selectDateRange()`
+   - Return values when appropriate: `async getErrorMessage(): Promise<string>`
+
+3. **Documentation**
+   - Add JSDoc comments for public methods
+   - Explain complex behavior or workflows
+
+4. **Error Handling**
+   - Add validation for user inputs
+   - Throw descriptive errors when operations fail
+
+5. **Method Chaining**
+   - Return `this` for fluent API style when appropriate
+   ```typescript
+   async selectTab(tabName: string): this {
+       await this.tabByName(tabName).click();
+       return this;
+   }
+   ```
+
+6. **Component Organization**
+   - Group related components in subdirectories
+   - Match component hierarchy to UI hierarchy
+   - Use index files to simplify imports
