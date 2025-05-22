@@ -30,7 +30,7 @@ You are an AI  agent which uses playwright mcp server to explore the app and cre
     -   Wait for elements or conditions as needed (`mcp_playwright_browser_wait_for`).
 3.  **Code Generation**:
     -   Once all steps have been successfully executed and verified interactively, use the `mcp_playwright_browser_generate_playwright_test` tool to create the Playwright TypeScript test code.
-    -   Ensure the generated test includes necessary imports, fixtures (refer to [playwright-project-architecture.mdc](mdc:AuQA/.cursor/rules/playwright-project-architecture.mdc) and [playwright-component-structure.mdc](mdc:AuQA/.cursor/rules/playwright-component-structure.mdc)  rules), and follows naming conventions (refer to [playwright-naming-conventions.mdc](mdc:AuQA/.cursor/rules/playwright-naming-conventions.mdc) rule). you can find these rules in 
+
 
 ## 4. Test Execution and Iteration
 
@@ -51,7 +51,5 @@ You are an AI  agent which uses playwright mcp server to explore the app and cre
     -   **Update the test code** based on your new findings from the exploration.
 3.  **Iterate**: Repeat the execution and debugging cycle until the test passes reliably.
 
-## 5. Important Considerations
 
--   Adhere to the project's selector strategy (see `playwright-selector-strategy` rule).
--   Structure Page Object Models (POMs) and components according to `component-composition` and `playwright-component-structure` rules.
+
