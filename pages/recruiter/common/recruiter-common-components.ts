@@ -1,5 +1,5 @@
 import { Locator, Page } from "@playwright/test";
-import { BasePage } from "pages/base-page.js";
+import { BasePage, step } from "pages/base-page.js";
 
 export class RecruiterCommonComponents extends BasePage {
     /**
@@ -12,7 +12,7 @@ export class RecruiterCommonComponents extends BasePage {
     readonly yellowAlert: Locator;
     readonly successSignInYellowAlert: Locator;
     readonly closeYellowAlertButton: Locator;
-    readonly successToast: Locator;
+    readonly NuskhaSuccessToast: Locator;
     readonly NuskhaSpinner: Locator;
     readonly NuskhaModalContainer: Locator;
     readonly NuskhaCloseButton: Locator;
@@ -25,7 +25,7 @@ export class RecruiterCommonComponents extends BasePage {
             .locator(".alert-message")
             .first()
             .getByText("Successfully signed in as");
-        this.successToast = page.locator(".nuskha-alert-content.n-success-message");
+        this.NuskhaSuccessToast = page.locator(".nuskha-alert-content.n-success-message");
         this.NuskhaSpinner = page.locator(".nuskha-spinner-container");
         this.NuskhaModalContainer = page.locator(".nuskha-modal");
         this.NuskhaCloseButton = this.NuskhaModalContainer.getByRole("button", {
@@ -39,9 +39,21 @@ export class RecruiterCommonComponents extends BasePage {
             await this.closeYellowAlertButton.click();
         }
     }
+        /**
+         * Handles automatic closing of the yellow alert that may appear when form is opened
+         */
+    @step("Set up automatic dismissal of sign-in success alert")
+    async addSuccessSignInYellowAlertHandler() {
+        await this.page.addLocatorHandler(
+            this.successSignInYellowAlert,
+            async () => {
+                await this.closeYellowAlert();
+            }
+        );
+    }
 
-    async waitForSuccessToastWithText(text: string) {
-        await this.successToast.filter({ hasText: text }).waitFor({ state: "visible" });
+    async waitForNuskhaSuccessToastWithText(text: string) {
+        await this.NuskhaSuccessToast.filter({ hasText: text }).waitFor({ state: "visible" });
     }
 
     async waitForNuskhaSpinnerToDisappear() {

@@ -29,7 +29,7 @@ test.describe("Assessment Candidate Invitation Flow", () => {
         async ({ assessmentOverviewPage }) => {
             // Arrange
             const inviteModal = await assessmentOverviewPage.openInviteCandidatesModal();
-            await inviteModal.addSuccessSignInYellowAlertHandler();
+            await inviteModal.recruiterCommonComponents.addSuccessSignInYellowAlertHandler();
 
             // Assert - verify modal elements are visible
             await expect(inviteModal.modalTitle).toBeVisible();
@@ -126,7 +126,7 @@ test.describe("Assessment Candidate Invitation Flow", () => {
             await inviteModal.submitInvite();
 
             // Assert - check for success message
-            await assessmentOverviewPage.recruiterCommonComponents.waitForSuccessToastWithText(
+            await assessmentOverviewPage.recruiterCommonComponents.waitForNuskhaSuccessToastWithText(
                 "1 candidate have been successfully invited"
             );
 

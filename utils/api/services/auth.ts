@@ -118,9 +118,6 @@ export class AuthApi extends BaseApiService {
     private extractCsrfTokenFromHtml(html: string): string | null {
         const match = html.match(/name="csrfmiddlewaretoken" value="([^"]+)"/);
         if (!match || !match[1]) return null;
-
-        // Store token in the TokenManager
-        this.tokenManager.setCsrfToken(match[1]);
         return match[1];
     }
 }

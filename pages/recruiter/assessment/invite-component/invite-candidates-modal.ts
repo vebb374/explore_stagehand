@@ -10,7 +10,7 @@ import { DatePicker } from "pages/common-components/date-picker.js";
  */
 export class InviteCandidatesModal extends BasePage {
     //Components
-    readonly recruierCommonComponents: RecruiterCommonComponents;
+    readonly recruiterCommonComponents: RecruiterCommonComponents;
 
     /**
      * DatePicker utility for handling invite expiration date interactions
@@ -35,7 +35,7 @@ export class InviteCandidatesModal extends BasePage {
 
     constructor(page: Page) {
         super(page);
-        this.recruierCommonComponents = new RecruiterCommonComponents(page);
+        this.recruiterCommonComponents = new RecruiterCommonComponents(page);
 
         // Initialize locators
         this.modalTitle = page.locator("header").filter({ hasText: "Invite candidates" });
@@ -143,7 +143,7 @@ export class InviteCandidatesModal extends BasePage {
      * Closes the modal
      */
     async closeModal() {
-        await this.recruierCommonComponents.closeYellowAlert();
+        await this.recruiterCommonComponents.closeYellowAlert();
         await this.closeModalButton.click();
     }
 
@@ -177,9 +177,9 @@ export class InviteCandidatesModal extends BasePage {
     @step("Set up automatic dismissal of sign-in success alert")
     async addSuccessSignInYellowAlertHandler() {
         await this.page.addLocatorHandler(
-            this.recruierCommonComponents.successSignInYellowAlert,
+            this.recruiterCommonComponents.successSignInYellowAlert,
             async () => {
-                await this.recruierCommonComponents.closeYellowAlert();
+                await this.recruiterCommonComponents.closeYellowAlert();
             }
         );
     }
