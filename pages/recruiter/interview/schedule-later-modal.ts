@@ -141,7 +141,6 @@ export class ScheduleLaterModal extends BasePage {
      */
     async setInterviewTime(time: string) {
         await this.startTimeField.click();
-        await this.timeDropdownOption(time).scrollIntoViewIfNeeded();
         await this.timeDropdownOption(time).click();
     }
 

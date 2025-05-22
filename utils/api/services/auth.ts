@@ -1,43 +1,37 @@
-// utils/api/clients/auth-api.ts
+// utils/api/services/auth.ts
 import { APIRequestContext, APIResponse } from "@playwright/test";
 import { Logger } from "../logger.js";
+import { TokenManager } from "../token-manager.js";
+import { BaseApiService } from "./base-service.js";
 
-export class AuthApi {
-    private request: APIRequestContext;
-    private baseURL: string;
+export class AuthApi extends BaseApiService {
     private candidateBaseURL: string;
-    private logger: Logger;
 
-    constructor(request: APIRequestContext, logger?: Logger) {
-        this.request = request;
-        // Use the provided logger or create a new one
-        this.logger = logger
-            ? logger.withClassName(this.constructor.name)
-            : new Logger({ serviceName: this.constructor.name });
-
-        // Ensure baseURL has a fallback if env variables are not set
-        this.baseURL =
-            process.env.API_BASE_URL || process.env.BASE_URL || "https://app.hackerearth.com";
+    constructor(request: APIRequestContext, logger: Logger, tokenManager: TokenManager) {
+        super(request, logger, tokenManager);
         this.candidateBaseURL = "https://www.hackerearth.com";
     }
 
     async login(email: string, password: string): Promise<APIResponse> {
         // Get CSRF token from login page form
-        const formResponse = await this.request.get(`${this.baseURL}/recruiters/login/`);
+        const formResponse = await this.get(`recruiters/login/`);
         if (!formResponse.ok()) {
             throw new Error(
                 `Failed to fetch login page: ${formResponse.status()} ${formResponse.statusText()}`
             );
         }
         const html = await formResponse.text();
+
+        // Extract and store the CSRF token from HTML
         const formCsrfToken = this.extractCsrfTokenFromHtml(html);
+        if (!formCsrfToken) {
+            throw new Error("Could not find CSRF token in HTML form");
+        }
 
         // Login
-        const loginResponse = await this.request.post(`${this.baseURL}/recruiters/login/`, {
+        const loginResponse = await this.post(`recruiters/login/`, {
             headers: {
                 Referer: `${this.baseURL}/recruiters/login/`,
-                Accept: "*/*",
-                "X-Requested-With": "XMLHttpRequest",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
             form: {
@@ -56,22 +50,30 @@ export class AuthApi {
         }
         this.logger.info(`successfully logged in with email: ${email} and password: ${password}`);
 
+        // Extract CSRF token from response headers
+        this.tokenManager.extractCsrfTokenFromHeaders(loginResponse);
+
         return loginResponse;
     }
 
     async loginAsCandidate(email: string, password: string): Promise<APIResponse> {
         // Get CSRF token from candidate login page form
-        const formResponse = await this.request.get(`${this.candidateBaseURL}/login/`);
+        const formResponse = await this.get(`${this.candidateBaseURL}/login/`);
         if (!formResponse.ok()) {
             throw new Error(
                 `Failed to fetch candidate login page: ${formResponse.status()} ${formResponse.statusText()}`
             );
         }
         const html = await formResponse.text();
+
+        // Extract and store the CSRF token from HTML
         const formCsrfToken = this.extractCsrfTokenFromHtml(html);
+        if (!formCsrfToken) {
+            throw new Error("Could not find CSRF token in HTML form");
+        }
 
         // Login as candidate
-        const loginResponse = await this.request.post(`${this.candidateBaseURL}/login/`, {
+        const loginResponse = await this.post(`${this.candidateBaseURL}/login/`, {
             headers: {
                 Referer: `${this.candidateBaseURL}/login/`,
                 Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -96,21 +98,29 @@ export class AuthApi {
             `successfully logged in candidate with email: ${email} and password: ${password}`
         );
 
+        // Extract CSRF token from response headers
+        this.tokenManager.extractCsrfTokenFromHeaders(loginResponse);
+
         return loginResponse;
     }
 
     async logout(): Promise<APIResponse> {
         this.logger.info("logging out user");
-        const response = await this.request.get(
-            `${this.baseURL}/logout/?next=/recruiters/login/`,
-            {}
-        );
+        const response = await this.get(`logout/?next=/recruiters/login/`);
         return response;
     }
 
-    private extractCsrfTokenFromHtml(html: string): string {
+    /**
+     * Extract CSRF token from HTML form
+     * @param html HTML content containing CSRF token
+     * @returns CSRF token if found, null otherwise
+     */
+    private extractCsrfTokenFromHtml(html: string): string | null {
         const match = html.match(/name="csrfmiddlewaretoken" value="([^"]+)"/);
-        if (!match) throw new Error("Could not find CSRF token in HTML form");
+        if (!match || !match[1]) return null;
+
+        // Store token in the TokenManager
+        this.tokenManager.setCsrfToken(match[1]);
         return match[1];
     }
 }
